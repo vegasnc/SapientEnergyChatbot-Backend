@@ -42,5 +42,8 @@ GET_EQUIPMENT_LIST='/api/explorer/equipment_list'
 EQUIPMENT_CHART='/api/explorer/equipment_chart'
 EQUIPMENT_YTD_USAGE='/api/explorer/equipment_ytd_usage'
 
+# chart & graph
+GET_CHART_DATA = '/api/energy/chart'
+
 # config
 CONFIG_METADATA='/api/config/metadata'
