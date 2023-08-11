@@ -33,7 +33,10 @@ class EquipPowerConsumption:
         if equip_list != 404:
             for item in equip_list:
                 conp.append(item["consumption"]["now"])
-            return numpy.mean(conp)
+            return {
+                    "key" : "average_consumption",
+                    "value" : numpy.mean(conp)
+                }
         else:
             return False
         
@@ -58,11 +61,11 @@ class EquipPowerConsumption:
                         ytd = temp["data"][0]["ytd"]["ytd"]
                         if( ytd > old_ytd ):
                             old_ytd = ytd
+                            equip.extend(temp)
                             top_equip = equip
             return top_equip
         else:
             return 404
     # Are there any specific time periods where power consumption is significantly higher?
     def get_period_higher_consumption(self):
-        
         pass
