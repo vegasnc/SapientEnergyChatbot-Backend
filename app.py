@@ -13,7 +13,6 @@ keyword_intent = keyword_intent.KeywordIntent()
 
 @app.route('/api/get_answer', methods=['POST'])
 def get_answer():
-    print("---------------")
     # Access the request data
     data = request.get_json()
     question = data["question"]

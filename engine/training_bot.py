@@ -21,8 +21,6 @@ def extraction(collection):
                 "api": api_column[index]
             }
         )
-
-        print(rankedList)
     
     # Insert the data to database
     # for item in keyword_list:

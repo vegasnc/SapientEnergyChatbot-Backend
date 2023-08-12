@@ -1,4 +1,6 @@
 from rake_nltk import Rake
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
 from dotenv import dotenv_values
 import json
 import openai
@@ -13,24 +15,48 @@ openai.api_key=env_vars["OPENAI_API_KEY"]
 IngestClass = ingest.IngestDataClass()
 EquipmentPowerConsumption = equipment_power_consumption.EquipPowerConsumption()
 
+# Get top ratio object
+def get_top_ratio_item(documents, keyword_arr):
+    t_ratio = 0
+    res_obj = None
+
+    # Make a sentence from keyword arr
+    c_sentence = ""
+    for item in keyword_arr:
+        c_sentence += item + " "
+
+    # Make a sentence and get top ratio object
+    for item in documents:
+
+        #  Make a sentence from origin keyword arr
+        o_sentence = ""
+        for word in item["keywords"]:
+            o_sentence += word + " "
+        
+        # Get token sort ratio with origin sentence and current sentence
+        ratio = fuzz.token_sort_ratio(o_sentence, c_sentence)
+        if ratio >= 75 and t_ratio < ratio:
+            t_ratio = ratio
+            res_obj = item
+    return res_obj
+
 # Generate answer from question
 def get_answer(question, collection):
 
     # Extract keyword for searching API
     keyword_arr = keyword_extract.keyword_extration(question)
-    print("========================keyword array======================")
-    print(keyword_arr)
-    result = collection.find_one({"keywords": {"$all" : keyword_arr}})
+    result = collection.find({"keywords": {"$in" : keyword_arr}})
+    
+    result = get_top_ratio_item(result, keyword_arr)
     
     # If the search result is not exist
     if result == None:
         return None
+    
     # Matching api
     # What is the average power consumption of our equipment?
     elif result["api"] == "get_avg_power_consumption":
         res = EquipmentPowerConsumption.get_avg_power_consumption()
-        print("generate_answer: 30 : ------------res-------------")
-        print(res)
         if res:
             answer = generate_answer_from_openai(res)
             return answer
@@ -45,14 +71,30 @@ def get_answer(question, collection):
             return answer
         else:
             return None
+    # Are there any specific time periods where power consumption is significantly higher?
+    elif result["api"] == "get_period_higher_consumption":
+        res = EquipmentPowerConsumption.get_period_higher_consumption()
+
+        if res != 404:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+    # How do different equipment models and brands vary in terms of power consumption?
+    elif result["api"] == "get_average_by_category_type":
+        res = EquipmentPowerConsumption.get_average_by_category_type()
+
+        if res != 404:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
     return None
 
 # Generate answer from data using OpenAI text completion
 def generate_answer_from_openai(data):
     data = IngestClass.process_data(data)
     text = "\n".join([f"{item['key']}: {json.dumps(item['value'])}" for item in data])
-    print("generate_answer: 54 : ------------text-------------")
-    print(text)
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
@@ -63,7 +105,7 @@ def generate_answer_from_openai(data):
             },
             {
                 "role": "user", 
-                "content": 'Please provide a human readable version of this data. Should be understandable to 18 year old, and include all of the data. No warnings, no other text shold be present in your answer.'
+                "content": 'Please provide a human readable sentence of this data. Should be understandable to 18 year old, and include almost of the data. No warnings, no other text shold be present in your answer.'
             },
         ],
     )

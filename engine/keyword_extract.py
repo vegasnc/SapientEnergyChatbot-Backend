@@ -3,11 +3,14 @@ from rake_nltk import Rake
 
 def keyword_extration(text):
     # Init Rake
+    result = []
     rake_mltk_var = Rake()
 
     rake_mltk_var.extract_keywords_from_text(text)
     rankedList = rake_mltk_var.get_ranked_phrases()[:10]
-    return rankedList
+    for item in rankedList:
+        result.extend(item.split())
+    return result
 
     # language = "en"
     # max_ngram_size = 1

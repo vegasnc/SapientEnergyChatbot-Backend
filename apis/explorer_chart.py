@@ -86,8 +86,6 @@ class ExplorerClass:
             "consumption": consumption,
             "order_by": order_by,
             "sort_by": sort_by,
-            # "page_size": page_size,
-            # "page_no": page_no,
         }
 
         data = {
@@ -228,3 +226,4 @@ class ExplorerClass:
             return response.status_code
         else:
             return response.json()
+
