@@ -68,6 +68,18 @@ class IngestDataClass:
             result_data.append(item)
         return result_data
     
+    # Re-format the json array data
+    def process_array_data(self, list_raw_data):
+        result_data = []
+        for item in list_raw_data:
+            raw_data = self.flatten_json(item)
+            for key, value in raw_data.items():
+                t_item = {"key": key.replace('_', ' ').capitalize(), "value": value}
+                result_data.append(t_item)
+        print(result_data)
+        return result_data
+
+    
     # Merge two json data without repeat keys
     def merge_json_data(self, source1, source2):
         merged_data = source1.copy()

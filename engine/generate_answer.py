@@ -89,11 +89,25 @@ def get_answer(question, collection):
             return answer
         else:
             return None
+    # Which equipment has shown the most improvement in power efficiency over time?
+    elif result["api"] == "get_most_improvement_equipment":
+        res = EquipmentPowerConsumption.get_most_improvement_equipment()
+
+        if res != 404 and res != None:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
     return None
 
 # Generate answer from data using OpenAI text completion
 def generate_answer_from_openai(data):
-    data = IngestClass.process_data(data)
+    if type(data) is list:
+        data = IngestClass.process_array_data(data)
+    else:
+        data = IngestClass.process_data(data)
+
     text = "\n".join([f"{item['key']}: {json.dumps(item['value'])}" for item in data])
 
     response = openai.ChatCompletion.create(
