@@ -11,7 +11,7 @@ class ChatGraph:
         self.ConstAPIClass = constapis.APIClass()
         self.UserAPIClass = userapi.UserAPI()
 
-    def getChartData(self, date_from, date_to, building_id = "", aggregate = "month", aggregation_type="sum",
+    def get_chart_data(self, date_from, date_to, aggregate = "month", building_id = "", aggregation_type="sum",
                      minute="1", consumption="energy"):
         if self.UserAPIClass.check_user_login_status():
             # if user is logged in
@@ -20,10 +20,37 @@ class ChatGraph:
                 "date_to": date_to,
                 "tz_info": "US/Eastern"
             }
-            response = requests.post(constapis.BASE_URL + constapis.GET_CHART_DATA, json=data,
+            if aggregate != "month":
+                payload = {
+                    "aggregate" : aggregate
+                }
+                
+                response = requests.post(constapis.BASE_URL + constapis.GET_CHART_DATA, json=data,
+                                        params=payload, headers=self.ConstAPIClass.getHeader())
+            else:
+                response = requests.post(constapis.BASE_URL + constapis.GET_CHART_DATA, json=data,
                                     headers=self.ConstAPIClass.getHeader())
-            print("-------------")
-            print(response)
+            if response.status_code != 200:
+                return 404
+            else:
+                return response.json()
+        else:
+            return 404
+    
+    def get_hourly_data(self, date_from, date_to, building_id):
+        if self.UserAPIClass.check_user_login_status():
+            # if user is logged in
+            payload = {
+                "building_id": building_id,
+            }
+
+            data = {
+                "date_from": date_from,
+                "date_to": date_to,
+                "tz_info": "US/Eastern"
+            }
+            response = requests.post(constapis.BASE_URL + constapis.GET_HOURLY_DATA, json=data,
+                                    params=payload, headers=self.ConstAPIClass.getHeader())
             if response.status_code != 200:
                 return 404
             else:

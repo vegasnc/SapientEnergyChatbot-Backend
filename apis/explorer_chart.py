@@ -170,7 +170,7 @@ class ExplorerClass:
         divisible_by: string (1000/1000000)
     """
     def equipment_chart(self, equipment_id, building_id, date_from, date_to, detailed=False, 
-                        consumption="energy", aggregate="", aggregation_type="sum", minute="1", divisible_by="",):
+                        consumption="energy", aggregate="day", aggregation_type="sum", minute="1", divisible_by="",):
         payload = {
             "equipment_id": equipment_id,
             "building_id": building_id,
@@ -180,10 +180,10 @@ class ExplorerClass:
             "minute": minute
         }
 
-        if aggregate == "":
+        if aggregate != "":
             payload.update({"aggregate": aggregate})
 
-        if divisible_by == "":
+        if divisible_by != "":
             payload.update({"divisible_by": divisible_by})
 
         data = {

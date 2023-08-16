@@ -9,7 +9,6 @@ class Database(object):
     def __init__(self) -> None:
         self.client = MongoClient(env_vars["DB_URL"])
         self.db = self.client[env_vars["DB_NAME"]]
-        print("----- Database connected! ------")
 
     def insert(self, element, collection_name):
         element["created"] = datetime.now()

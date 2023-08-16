@@ -47,3 +47,6 @@ GET_CHART_DATA = '/api/energy/chart'
 
 # config
 CONFIG_METADATA='/api/config/metadata'
+
+#Time of day
+GET_HOURLY_DATA='/api/energy/time_of_day/hourly'

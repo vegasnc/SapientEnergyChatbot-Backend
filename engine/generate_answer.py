@@ -46,22 +46,24 @@ def get_answer(question, collection):
     # Extract keyword for searching API
     keyword_arr = keyword_extract.keyword_extration(question)
     result = collection.find({"keywords": {"$in" : keyword_arr}})
-    
+
     result = get_top_ratio_item(result, keyword_arr)
     
     # If the search result is not exist
     if result == None:
         return None
     
-    # Matching api
+    # ------------------- Matching api ---------------------
     # What is the average power consumption of our equipment?
     elif result["api"] == "get_avg_power_consumption":
         res = EquipmentPowerConsumption.get_avg_power_consumption()
+
         if res:
             answer = generate_answer_from_openai(res)
             return answer
         else:
             return None
+        
     # Which equipment consumes the most power on a regular basis?
     elif result["api"] == "get_most_consumption_equipment":
         res = EquipmentPowerConsumption.get_most_consumption_equipment()
@@ -71,6 +73,7 @@ def get_answer(question, collection):
             return answer
         else:
             return None
+        
     # Are there any specific time periods where power consumption is significantly higher?
     elif result["api"] == "get_period_higher_consumption":
         res = EquipmentPowerConsumption.get_period_higher_consumption()
@@ -80,6 +83,7 @@ def get_answer(question, collection):
             return answer
         else:
             return None
+        
     # How do different equipment models and brands vary in terms of power consumption?
     elif result["api"] == "get_average_by_category_type":
         res = EquipmentPowerConsumption.get_average_by_category_type()
@@ -89,6 +93,7 @@ def get_answer(question, collection):
             return answer
         else:
             return None
+        
     # Which equipment has shown the most improvement in power efficiency over time?
     elif result["api"] == "get_most_improvement_equipment":
         res = EquipmentPowerConsumption.get_most_improvement_equipment()
@@ -98,6 +103,80 @@ def get_answer(question, collection):
             return answer
         else:
             return None
+        
+    # Are there any seasonal trends noticeable in equipment power consumption?
+    elif result["api"] == "get_seasonal_trends_power_consumption":
+        res = EquipmentPowerConsumption.get_seasonal_trends_power_consumption()
+
+        if res != 404 and res != None:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    # Have there been any instances where sudden spikes in power consumption occurred?
+    elif result["api"] == "get_spike_power_consumption":
+        res = EquipmentPowerConsumption.get_spike_power_consumption()
+
+        if res != 404 and res != None:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    # Is there any noticeable difference in power consumption between weekdays and weekends?
+    elif result["api"] == "get_power_consumption_weekdays_weekend":
+        res = EquipmentPowerConsumption.get_power_consumption_weekdays_weekend()
+
+        if res != 404 and len(res) > 0:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+    
+    # How does power consumption vary between different equipment brand within our organization?
+    elif result["api"] == "get_power_consumption_between_equip_type":
+        res = EquipmentPowerConsumption.get_power_consumption_between_equip_type()
+
+        if res != 404 and len(res) > 0:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    # Does power consumption vary during different time periods of the day or night?
+    elif result["api"] == "get_power_consumption_day_night":
+        res = EquipmentPowerConsumption.get_power_consumption_day_night()
+
+        if res != 404 and len(res) > 0:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    # Have any of the equipment undergone a sudden increase in power consumption?
+    elif result["api"] == "get_equipment_sudden_increase_consumption":
+        res = EquipmentPowerConsumption.get_equipment_sudden_increase_consumption()
+
+        print(res)
+
+        if res != 404 and len(res) > 0:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    # Is there any equipment showing increased energy usage during non-business periods?
+    # elif result["api"] == "get_euqipment_increased_consumption_nonbusiness":
+    #     res = EquipmentPowerConsumption.get_euqipment_increased_consumption_nonbusiness()
+
+    #     print(res)
+
+    #     if res != 404 and len(res) > 0:
+    #         answer = generate_answer_from_openai(res)
+    #         return answer
+    #     else:
+    #         return None
         
     return None
 
