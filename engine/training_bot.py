@@ -23,7 +23,7 @@ def extraction(collection):
         )
     
     # Insert the data to database
-    # for item in keyword_list:
-    #     collection.create(item)
+    for item in keyword_list:
+        collection.create(item)
     
     print("Extract Successed!!!")
