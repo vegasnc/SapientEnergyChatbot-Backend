@@ -32,4 +32,4 @@ def get_answer():
 
 if __name__ == '__main__':
     # training_bot.extraction(keyword_intent)
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True, use_reloader=False, port=8080)
