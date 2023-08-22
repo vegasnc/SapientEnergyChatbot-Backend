@@ -31,5 +31,5 @@ def get_answer():
         }, 200  
 
 if __name__ == '__main__':
-    training_bot.extraction(keyword_intent)
+    # training_bot.extraction(keyword_intent)
     app.run(debug=True, use_reloader=False)
