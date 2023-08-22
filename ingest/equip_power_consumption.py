@@ -45,7 +45,8 @@ class EquipPowerConsumption:
 
             return {
                     "key" : "average_consumption",
-                    "value" : np.mean(conp)
+                    "value" : np.mean(conp),
+                    "unit": "w"
                 }
         else:
             return False
