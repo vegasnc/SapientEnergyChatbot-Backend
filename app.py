@@ -17,6 +17,8 @@ def get_answer():
     data = request.get_json()
     question = data["question"]
 
+    print("Question: " + question)
+
     
     # Get suitable data for generating answer
     s_data = generate_answer.get_answer(question, keyword_intent)
@@ -32,4 +34,5 @@ def get_answer():
 
 if __name__ == '__main__':
     # training_bot.extraction(keyword_intent)
+    print("Server is running 5000")
     app.run(debug=True, use_reloader=False)
