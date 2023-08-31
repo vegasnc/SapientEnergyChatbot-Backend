@@ -324,20 +324,34 @@ class EquipPowerConsumption:
         else:
             return False
     
-    # Is there any equipment showing increased energy usage during non-business periods?
-    def get_euqipment_increased_consumption_nonbusiness(self):
-        building_list = self.ExplorerClass.get_building()
+    # # Is there any equipment showing increased energy usage during non-business periods?
+    # def get_euqipment_increased_consumption_nonbusiness(self):
+    #     building_list = self.ExplorerClass.get_building()
 
-        if building_list != 404:
-            equip_list = []
+    #     if building_list != 404:
+    #         equip_list = []
 
-            for building in building_list:
-                equip_list = self.ExplorerClass.get_equipment_list(building["building_id"], self.DATE_BEFORE_ONE_MONTH, self.DATE_NOW)["data"]
+    #         for building in building_list:
+    #             equip_list = self.ExplorerClass.get_equipment_list(building["building_id"], self.DATE_BEFORE_ONE_MONTH, self.DATE_NOW)["data"]
                 
-                for equip_item in equip_list:
-                    equip_chart = self.ExplorerClass.equipment_chart(equip_item["equipment_id"], building["building_id"], 
-                                                                     self.DATE_BEFORE_ONE_MONTH, self.DATE_NOW)
-                    print(equip_chart["data"])
-                    # aggregate the weekday and weekend data
+    #             for equip_item in equip_list:
+    #                 equip_chart = self.ExplorerClass.equipment_chart(equip_item["equipment_id"], building["building_id"], 
+    #                                                                  self.DATE_BEFORE_ONE_MONTH, self.DATE_NOW)
+    #                 print(equip_chart["data"])
+    #                 # aggregate the weekday and weekend data
 
-        # We can make the API but the speed is too slow, so if we make the api, may be can't use this
+    #     # We can make the API but the speed is too slow, so if we make the api, may be can't use this
+
+    # ???
+    def get_building_energy_consumption_overall(self):
+        building_consumption_overall = self.ExplorerClass.overall_building_energy_consumption(self.DATE_BEFORE_ONE_MONTH, self.DATE_NOW)
+
+        if building_consumption_overall != 404 and building_consumption_overall != 422:
+            return building_consumption_overall
+        else:
+            return False
+
+
+
+
+

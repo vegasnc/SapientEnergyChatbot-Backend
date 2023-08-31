@@ -6,7 +6,7 @@ import engine.training_bot as training_bot
 import engine.generate_answer as generate_answer
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, methods=[ 'POST', 'GET' ], allow_headers=[ 'Content-Type' ])
 
 # Init mongo db and create collection
 keyword_intent = keyword_intent.KeywordIntent()
@@ -18,7 +18,6 @@ def get_answer():
     question = data["question"]
 
     print("Question: " + question)
-
     
     # Get suitable data for generating answer
     s_data = generate_answer.get_answer(question, keyword_intent)
@@ -35,4 +34,4 @@ def get_answer():
 if __name__ == '__main__':
     # training_bot.extraction(keyword_intent)
     print("Server is running 5000")
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True)

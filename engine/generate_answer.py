@@ -177,6 +177,16 @@ def get_answer(question, collection):
     #         return answer
     #     else:
     #         return None
+
+    # The question is not sure for now, 
+    elif result["api"] == "get_building_energy_consumption_overall":
+        res = EquipmentPowerConsumption.get_building_energy_consumption_overall()
+
+        if res != 404 and res != False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
         
     return None
 

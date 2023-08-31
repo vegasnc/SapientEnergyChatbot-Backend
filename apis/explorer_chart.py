@@ -227,3 +227,20 @@ class ExplorerClass:
         else:
             return response.json()
 
+    def overall_building_energy_consumption(self, date_from, date_to):
+        if self.UserAPIClass.check_user_login_status():
+            data = {
+                "date_from": date_from,
+                "date_to": date_to,
+                "tz_info": "US/Eastern",
+            }
+
+            response = requests.post(constapis.BASE_URL + constapis.GET_OVERALL_BUILDING, json=data,
+                                    headers=self.ConstAPIClass.getHeader())
+                
+            if response.status_code != 200:
+                return response.status_code
+            else:
+                return response.json()
+        else:
+            return 404

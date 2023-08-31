@@ -13,6 +13,7 @@ class APIClass:
         USER_TOKEN = token
 
     def getHeader(self):
+        print(USER_TOKEN)
         if( USER_TOKEN == "" ):
             return {
                 'Content-type': 'application/json'
@@ -50,3 +51,6 @@ CONFIG_METADATA='/api/config/metadata'
 
 #Time of day
 GET_HOURLY_DATA='/api/energy/time_of_day/hourly'
+
+# Portfolio
+GET_OVERALL_BUILDING = "/api/energy/portfolio/overall"
