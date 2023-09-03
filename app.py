@@ -33,5 +33,6 @@ def get_answer():
 
 if __name__ == '__main__':
     # training_bot.extraction(keyword_intent)
+ 
     print("Server is running 5000")
     app.run(debug=True)

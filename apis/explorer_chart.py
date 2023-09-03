@@ -244,3 +244,34 @@ class ExplorerClass:
                 return response.json()
         else:
             return 404
+        
+    def overall_building_power_consumption_by_end_uses_category(self, building_id, off_hours, date_from, date_to):
+        if self.UserAPIClass.check_user_login_status():
+            if( off_hours == None ):
+                payload = {
+                    "building_id": building_id
+                }
+            else:
+                payload = {
+                    "off_hours": off_hours,
+                    "building_id": building_id
+                }
+
+            data = {
+                "date_from": date_from,
+                "date_to": date_to,
+                "tz_info": "US/Eastern",
+            }
+
+
+            response = requests.post(constapis.BASE_URL + constapis.GET_END_USE_CATEGORY, json=data,
+                                      params=payload, headers=self.ConstAPIClass.getHeader())
+            
+            if response.status_code!= 200:
+                return response.status_code
+            else:
+                return response.json()
+        else:
+            return 404
+        
+
