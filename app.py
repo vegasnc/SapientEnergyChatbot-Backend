@@ -1,6 +1,7 @@
 from flask import Flask, request
 from pymongo import MongoClient
 from models import keyword_intent # call model file
+from models import questions # call model file
 from flask_cors import CORS # to avoid cors error in different frontend like react js or any other
 import engine.training_bot as training_bot
 import engine.generate_answer as generate_answer
@@ -10,6 +11,7 @@ CORS(app, methods=[ 'POST', 'GET' ], allow_headers=[ 'Content-Type' ])
 
 # Init mongo db and create collection
 keyword_intent = keyword_intent.KeywordIntent()
+questions = questions.Questions()
 
 @app.route('/api/get_answer', methods=['POST'])
 def get_answer():
