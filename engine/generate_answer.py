@@ -4,6 +4,7 @@ from fuzzywuzzy import process
 from dotenv import dotenv_values
 import json
 import openai
+from models import relevant_api # call model file
 import engine.keyword_extract as keyword_extract
 import ingest.equip_power_consumption as equipment_power_consumption
 import ingest.ingest as ingest
@@ -12,6 +13,7 @@ import ingest.ingest as ingest
 env_vars = dotenv_values('.env')
 openai.api_key=env_vars["OPENAI_API_KEY"]
 
+relevant_model = relevant_api.RelevantAPI()
 IngestClass = ingest.IngestDataClass()
 EquipmentPowerConsumption = equipment_power_consumption.EquipPowerConsumption()
 
@@ -48,15 +50,61 @@ def get_answer(question, collection):
     result = collection.find({"keywords": {"$in" : keyword_arr}})
 
     result = get_top_ratio_item(result, keyword_arr)
+
+    print(result["system_message"])
     
     # If the search result is not exist
     if result == None:
         return None
+    else:
+        # ------------ Generate Answer Using ChatGPT ------------
+        system_msg = result["system_message"]
+        relevant_arr = result["relevant"]
+        api_arr = []
+        result = []
+
+        for relevant in relevant_arr:
+            result = relevant_model.find_one({"response": relevant})
+            print(result)
+            api_arr.append({
+                "response" : relevant,
+                "api" : result["api"]
+            })
+
+        print(api_arr)
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[
+                {
+                    "role": "system", 
+                    "content": system_msg
+                },
+                {
+                    "role": "user", 
+                    "content": question
+                },
+            ],
+        )
+
+        if response and response.choices:
+            assistant_reply = response.choices[0].message["content"]
+            result = {
+                    "answer" : assistant_reply,
+                    "api" : api_arr
+                }
+            return result
+        else:
+            return None
+        
+    return None
+
+def get_api_answer(api, question):
     
     # ------------------- Matching api ---------------------
     # What is the average power consumption of our equipment?
-    elif result["api"] == "get_avg_power_consumption":
-        res = EquipmentPowerConsumption.get_avg_power_consumption()
+    if api == "get_avg_power_consumption":
+        res = EquipmentPowerConsumption.get_avg_power_consumption(question)
 
         if res:
             answer = generate_answer_from_openai(res)
@@ -65,8 +113,8 @@ def get_answer(question, collection):
             return None
         
     # Which equipment consumes the most power on a regular basis?
-    elif result["api"] == "get_most_consumption_equipment":
-        res = EquipmentPowerConsumption.get_most_consumption_equipment()
+    elif api == "get_most_consumption_equipment":
+        res = EquipmentPowerConsumption.get_most_consumption_equipment(question)
 
         if res != 404 and len(res) != 0:
             answer = generate_answer_from_openai(res)
@@ -75,8 +123,8 @@ def get_answer(question, collection):
             return None
         
     # Are there any specific time periods where power consumption is significantly higher?
-    elif result["api"] == "get_period_higher_consumption":
-        res = EquipmentPowerConsumption.get_period_higher_consumption()
+    elif api == "get_period_higher_consumption":
+        res = EquipmentPowerConsumption.get_period_higher_consumption(question)
 
         if res != 404:
             answer = generate_answer_from_openai(res)
@@ -85,8 +133,8 @@ def get_answer(question, collection):
             return None
         
     # How do different equipment models and brands vary in terms of power consumption?
-    elif result["api"] == "get_average_by_category_type":
-        res = EquipmentPowerConsumption.get_average_by_category_type()
+    elif api == "get_average_by_category_type":
+        res = EquipmentPowerConsumption.get_average_by_category_type(question)
 
         if res != 404:
             answer = generate_answer_from_openai(res)
@@ -95,8 +143,8 @@ def get_answer(question, collection):
             return None
         
     # Which equipment has shown the most improvement in power efficiency over time?
-    elif result["api"] == "get_most_improvement_equipment":
-        res = EquipmentPowerConsumption.get_most_improvement_equipment()
+    elif api == "get_most_improvement_equipment":
+        res = EquipmentPowerConsumption.get_most_improvement_equipment(question)
 
         if res != 404 and res != None:
             answer = generate_answer_from_openai(res)
@@ -105,8 +153,8 @@ def get_answer(question, collection):
             return None
         
     # Are there any seasonal trends noticeable in equipment power consumption?
-    elif result["api"] == "get_seasonal_trends_power_consumption":
-        res = EquipmentPowerConsumption.get_seasonal_trends_power_consumption()
+    elif api == "get_seasonal_trends_power_consumption":
+        res = EquipmentPowerConsumption.get_seasonal_trends_power_consumption(question)
 
         if res != 404 and res != None:
             answer = generate_answer_from_openai(res)
@@ -115,8 +163,8 @@ def get_answer(question, collection):
             return None
         
     # Have there been any instances where sudden spikes in power consumption occurred?
-    elif result["api"] == "get_spike_power_consumption":
-        res = EquipmentPowerConsumption.get_spike_power_consumption()
+    elif api == "get_spike_power_consumption":
+        res = EquipmentPowerConsumption.get_spike_power_consumption(question)
 
         if res != 404 and res != None:
             answer = generate_answer_from_openai(res)
@@ -125,8 +173,8 @@ def get_answer(question, collection):
             return None
         
     # Is there any noticeable difference in power consumption between weekdays and weekends?
-    elif result["api"] == "get_power_consumption_weekdays_weekend":
-        res = EquipmentPowerConsumption.get_power_consumption_weekdays_weekend()
+    elif api == "get_power_consumption_weekdays_weekend":
+        res = EquipmentPowerConsumption.get_power_consumption_weekdays_weekend(question)
 
         if res != 404 and len(res) > 0:
             answer = generate_answer_from_openai(res)
@@ -135,8 +183,8 @@ def get_answer(question, collection):
             return None
     
     # How does power consumption vary between different equipment brand within our organization?
-    elif result["api"] == "get_power_consumption_between_equip_type":
-        res = EquipmentPowerConsumption.get_power_consumption_between_equip_type()
+    elif api == "get_power_consumption_between_equip_type":
+        res = EquipmentPowerConsumption.get_power_consumption_between_equip_type(question)
 
         if res != 404 and len(res) > 0:
             answer = generate_answer_from_openai(res)
@@ -145,8 +193,8 @@ def get_answer(question, collection):
             return None
         
     # Does power consumption vary during different time periods of the day or night?
-    elif result["api"] == "get_power_consumption_day_night":
-        res = EquipmentPowerConsumption.get_power_consumption_day_night()
+    elif api == "get_power_consumption_day_night":
+        res = EquipmentPowerConsumption.get_power_consumption_day_night(question)
 
         if res != 404 and len(res) > 0:
             answer = generate_answer_from_openai(res)
@@ -155,8 +203,8 @@ def get_answer(question, collection):
             return None
         
     # Have any of the equipment undergone a sudden increase in power consumption?
-    elif result["api"] == "get_equipment_sudden_increase_consumption":
-        res = EquipmentPowerConsumption.get_equipment_sudden_increase_consumption()
+    elif api == "get_equipment_sudden_increase_consumption":
+        res = EquipmentPowerConsumption.get_equipment_sudden_increase_consumption(question)
 
         print(res)
 
@@ -165,19 +213,89 @@ def get_answer(question, collection):
             return answer
         else:
             return None
-        
-    # Is there any equipment showing increased energy usage during non-business periods?
-    # elif result["api"] == "get_euqipment_increased_consumption_nonbusiness":
-    #     res = EquipmentPowerConsumption.get_euqipment_increased_consumption_nonbusiness()
 
-    #     print(res)
+    # The question is not sure for now, 
+    elif api == "get_building_energy_consumption_overall":
+        res = EquipmentPowerConsumption.get_building_energy_consumption_overall(question)
 
-    #     if res != 404 and len(res) > 0:
-    #         answer = generate_answer_from_openai(res)
-    #         return answer
-    #     else:
-    #         return None
+        if res != 404 and res != False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
         
+    elif api == "get_building_energy_consumption_by_end_uses_category":
+        res = EquipmentPowerConsumption.get_building_energy_consumption_by_end_uses_category(question)
+
+        if res != 404 and res != False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    elif api == "get_energy_building_equipment":
+        res = EquipmentPowerConsumption.get_energy_building_equipment(question)
+        
+        if res != 404 and res!= False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    elif api == "get_explorer_equip_power_consumption":
+        res = EquipmentPowerConsumption.get_explorer_equip_power_consumption(question)
+        
+        if res != 404 and res!= False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    elif api == "get_hvac_end_use_category_energy_consumption":
+        res = EquipmentPowerConsumption.get_hvac_end_use_category_energy_consumption(question)
+
+        if res != 404 and res != False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    elif api == "get_plug_end_use_category_energy_consumption":
+        res = EquipmentPowerConsumption.get_plug_end_use_category_energy_consumption(question)
+
+        if res != 404 and res != False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    elif api == "get_process_end_use_category_energy_consumption":
+        res = EquipmentPowerConsumption.get_process_end_use_category_energy_consumption(question)
+
+        if res != 404 and res != False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    elif api == "get_lighting_end_use_category_energy_consumption":
+        res = EquipmentPowerConsumption.get_lighting_end_use_category_energy_consumption(question)
+
+        if res != 404 and res != False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+        
+    elif api == "get_other_end_use_category_energy_consumption":
+        res = EquipmentPowerConsumption.get_other_end_use_category_energy_consumption(question)
+
+        if res != 404 and res != False:
+            answer = generate_answer_from_openai(res)
+            return answer
+        else:
+            return None
+
     return None
 
 # Generate answer from data using OpenAI text completion
@@ -198,7 +316,7 @@ def generate_answer_from_openai(data):
             },
             {
                 "role": "user", 
-                "content": 'Please provide a human readable sentence of this data. Should be understandable to 18 year old, and include almost of the data. No warnings, no other text shold be present in your answer.'
+                "content": 'Please provide a human readable sentence of this data. Should be understandable to 18 year old, and include almost of the data. No warnings, no other text shold be present in your answer. Now the power and energy unit are all w. But please convert to kWh.'
             },
         ],
     )
