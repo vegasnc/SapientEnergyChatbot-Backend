@@ -63,15 +63,15 @@ def get_answer(question, collection):
         api_arr = []
         result = []
 
+        print(relevant_arr)
+
         for relevant in relevant_arr:
             result = relevant_model.find_one({"response": relevant})
-            print(result)
-            api_arr.append({
-                "response" : relevant,
-                "api" : result["api"]
-            })
-
-        print(api_arr)
+            if result != None:
+                api_arr.append({
+                    "response" : relevant,
+                    "api" : result["api"]
+                })
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
