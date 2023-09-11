@@ -2,6 +2,7 @@ from rake_nltk import Rake
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 from dotenv import dotenv_values
+import re
 import json
 import openai
 from models import relevant_api # call model file
@@ -16,6 +17,16 @@ openai.api_key=env_vars["OPENAI_API_KEY"]
 relevant_model = relevant_api.RelevantAPI()
 IngestClass = ingest.IngestDataClass()
 EquipmentPowerConsumption = equipment_power_consumption.EquipPowerConsumption()
+
+notDetectedResponseList = [
+    "This question is about non-energy consummption.",
+    "This question is about general business."
+]
+
+notDetectedSystemMSGList = [
+    "You are an Energy Chatbot working to help facilitate energy data and information to help companies become more efficiency with energy use. User has asked a question which you can not answer with contentaul data. If the question is related to energy, business or equipment attempt to answer. If not, suggest asking a question about the platform or energy data.",
+    "You are an Energy Chatbot working to help facilitate energy data and information to help companies become more efficiency with energy use. User has asked a question which you can not answer with contentaul data. If the question is related to energy, business or equipment attempt to answer. If not, suggest asking a question about the platform or energy data."
+]
 
 # Get top ratio object
 def get_top_ratio_item(documents, keyword_arr):
@@ -51,19 +62,39 @@ def get_answer(question, collection):
 
     result = get_top_ratio_item(result, keyword_arr)
 
-    print(result["system_message"])
-    
     # If the search result is not exist
     if result == None:
-        return None
+        index = get_best_response(question, notDetectedResponseList)
+        system_msg = notDetectedSystemMSGList[index]
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_msg
+                },
+                {
+                    "role": "user",
+                    "content": question
+                }
+            ]
+        )
+
+        if response and response.choices:
+            assistant_reply = response.choices[0].message["content"]
+            result = {
+                "answer": assistant_reply,
+                "api": []
+            }
+            return result
+        else:
+            return None
     else:
         # ------------ Generate Answer Using ChatGPT ------------
         system_msg = result["system_message"]
         relevant_arr = result["relevant"]
         api_arr = []
         result = []
-
-        print(relevant_arr)
 
         for relevant in relevant_arr:
             result = relevant_model.find_one({"response": relevant})
@@ -326,3 +357,31 @@ def generate_answer_from_openai(data):
         return assistant_reply
     else:
         return "Error"
+
+# Function to get the best response and its index
+def get_best_response(question, response_list):
+    # Initialize variables to store the best response and its index
+    best_response_index = -1
+    best_response_score = -1.0  # Initialize with a low score
+
+    for i, response in enumerate(response_list):
+        # Generate a response from GPT-3 for the given question and response
+        # prompt = f"the myQuestion is : '{question}' \n the myAnswer is : {response}.\n please score from 0 to 100 how much the myAnswer is the correct answer of the myQuestion.\n  your response must be like : Score = score "
+        prompt = f"the myQuestion is : '{question}' \n the myCategory is : {response}.\n please score from 0 to 100 how much the myQuestion is in myCategory.\n  your response must be like : Score = score "
+        completion = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=prompt,
+            temperature=0.9,
+            max_tokens=256
+        )
+        score = re.findall(r'\d+' , completion.choices[0].text.strip())
+        if len(score):
+            try:
+                score = int(score[0])
+                if score > best_response_score:
+                    best_response_score = score
+                    best_response = response
+                    best_response_index = i
+            except:
+                pass
+    return best_response_index
