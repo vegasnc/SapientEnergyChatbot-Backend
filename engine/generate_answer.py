@@ -57,13 +57,19 @@ def get_top_ratio_item(documents, keyword_arr):
 def get_answer(question, collection):
 
     # Extract keyword for searching API
-    keyword_arr = keyword_extract.keyword_extration(question)
-    result = collection.find({"keywords": {"$in" : keyword_arr}})
+    result_arr = collection.find({})
+    question_arr = []
+    for item in result_arr:
+        question_arr.append(item["question"])
 
-    result = get_top_ratio_item(result, keyword_arr)
+    score, index = get_best_question(question, question_arr)
+
+    print(f"score is {score}")
+    print(f"index is {index}")
+    print(f"question is {question_arr[index]}")
 
     # If the search result is not exist
-    if result == None:
+    if score < 50:
         index = get_best_response(question, notDetectedResponseList)
         system_msg = notDetectedSystemMSGList[index]
         response = openai.ChatCompletion.create(
@@ -91,8 +97,8 @@ def get_answer(question, collection):
             return None
     else:
         # ------------ Generate Answer Using ChatGPT ------------
-        system_msg = result["system_message"]
-        relevant_arr = result["relevant"]
+        system_msg = result_arr[index]["system_message"]
+        relevant_arr = result_arr[index]["relevant"]
         api_arr = []
         result = []
 
@@ -357,6 +363,35 @@ def generate_answer_from_openai(data):
         return assistant_reply
     else:
         return "Error"
+    
+# Function to get the best question and its index
+def get_best_question(question, question_list):
+    # Initialize variables to store the best response and its index
+    best_response_index = -1
+    best_response_score = -1.0  # Initialize with a low score
+
+    for i, response in enumerate(question_list):
+        # Generate a response from GPT-3 for the given question and response
+        # prompt = f"the myQuestion is : '{question}' \n the myAnswer is : {response}.\n please score from 0 to 100 how much the myAnswer is the correct answer of the myQuestion.\n  your response must be like : Score = score "
+        prompt = f"The myQuestion is : '{question}' \n the myQuestionTemplate is : {response}.\n Please rate from 0 to 100 how similar myQuestion is to myQuestionTemplate.\n  Your response must be like : Score = score "
+        completion = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=prompt,
+            temperature=0.9,
+            max_tokens=256
+        )
+        score = re.findall(r'\d+' , completion.choices[0].text.strip())
+        if len(score):
+            try:
+                score = int(score[0])
+                if score > best_response_score:
+                    best_response_score = score
+                    best_response = response
+                    best_response_index = i
+            except:
+                pass
+
+    return best_response_score, best_response_index
 
 # Function to get the best response and its index
 def get_best_response(question, response_list):
@@ -384,4 +419,5 @@ def get_best_response(question, response_list):
                     best_response_index = i
             except:
                 pass
+
     return best_response_index

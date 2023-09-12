@@ -7,7 +7,6 @@ class Questions(object):
         self.collection_name = 'questions' # collection name
 
         self.fields = {
-            "keyword": "array",
             "question": "string",
             "relevant": "array",
             "system_message": "string",

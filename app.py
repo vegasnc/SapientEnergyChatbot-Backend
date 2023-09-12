@@ -4,7 +4,6 @@ from models import keyword_intent # call model file
 from models import questions # call model file
 from models import relevant_api # call model file
 from flask_cors import CORS # to avoid cors error in different frontend like react js or any other
-import engine.training_bot as training_bot
 import engine.construct_questions as construct_questions
 import engine.generate_answer as generate_answer
 
@@ -79,7 +78,5 @@ def set_relevant_model():
     
 
 if __name__ == '__main__':
-    # training_bot.extraction(keyword_intent)
- 
     print("Server is running 5000")
     app.run()

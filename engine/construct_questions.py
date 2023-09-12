@@ -1,9 +1,8 @@
 import pandas as pd
-import engine.keyword_extract as keyword_extract
 
 def construct_questions(collection):
     # Read the .xlsx file
-    question_data = pd.read_excel('quiz_relevant.xlsx')
+    question_data = pd.read_excel('quiz_response_system.xlsx')
 
     # Access the content
     question_column = question_data['Questions']
@@ -15,10 +14,9 @@ def construct_questions(collection):
     keyword_list = []
 
     for index in range(len(question_column)):
-        rankedList = keyword_extract.keyword_extration(question_column[index])
         keyword_list.append(
             {
-                "keywords": rankedList,
+                "question": question_column[index],
                 "relevant": [relevant_column0[index], relevant_column1[index], relevant_column2[index]],
                 "system_message": system_message_column[index]
             }
@@ -32,7 +30,7 @@ def construct_questions(collection):
 
 def construct_relevant(collection):
     # Read the .xlsx file
-    question_data = pd.read_excel('relevant.xlsx')
+    question_data = pd.read_excel('response_api.xlsx')
 
     # Access the content
     response_column = question_data['Response']
@@ -41,10 +39,8 @@ def construct_relevant(collection):
     keyword_list = []
 
     for index in range(len(response_column)):
-        rankedList = keyword_extract.keyword_extration(response_column[index])
         keyword_list.append(
             {
-                "keywords": rankedList,
                 "response": response_column[index],
                 "api": api_column[index]
             }
