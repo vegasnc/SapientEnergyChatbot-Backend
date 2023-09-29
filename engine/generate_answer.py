@@ -2,8 +2,10 @@ from rake_nltk import Rake
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 from dotenv import dotenv_values
+import re
 import json
 import openai
+from models import relevant_api # call model file
 import engine.keyword_extract as keyword_extract
 import ingest.equip_power_consumption as equipment_power_consumption
 import ingest.ingest as ingest
@@ -12,6 +14,7 @@ import ingest.ingest as ingest
 env_vars = dotenv_values('.env')
 openai.api_key=env_vars["OPENAI_API_KEY"]
 
+relevant_model = relevant_api.RelevantAPI()
 IngestClass = ingest.IngestDataClass()
 EquipmentPowerConsumption = equipment_power_consumption.EquipPowerConsumption()
 
@@ -20,6 +23,16 @@ TEXT_TABLE = "2"
 TEXT_PIECHART = "3"
 TEXT_BARCHART = "4"
 
+
+notDetectedResponseList = [
+    "This question is about non-energy consummption.",
+    "This question is about general business."
+]
+
+notDetectedSystemMSGList = [
+    "You are an Energy Chatbot working to help facilitate energy data and information to help companies become more efficiency with energy use. User has asked a question which you can not answer with contentaul data. If the question is related to energy, business or equipment attempt to answer. If not, suggest asking a question about the platform or energy data.",
+    "You are an Energy Chatbot working to help facilitate energy data and information to help companies become more efficiency with energy use. User has asked a question which you can not answer with contentaul data. If the question is related to energy, business or equipment attempt to answer. If not, suggest asking a question about the platform or energy data."
+]
 
 # Get top ratio object
 def get_top_ratio_item(documents, keyword_arr):
@@ -50,10 +63,12 @@ def get_top_ratio_item(documents, keyword_arr):
 def get_answer(question, collection):
 
     # Extract keyword for searching API
-    keyword_arr = keyword_extract.keyword_extration(question)
-    result = collection.find({"keywords": {"$in" : keyword_arr}})
+    result_arr = collection.find({})
+    question_arr = []
+    for item in result_arr:
+        question_arr.append(item["question"])
 
-    result = get_top_ratio_item(result, keyword_arr)
+    score, index = get_best_question(question, question_arr)
 
     question_category = get_question_category(question)
 
@@ -67,8 +82,10 @@ def get_answer(question, collection):
         }
         return result
 
-    print(result["api"])
-    
+    print(f"score is {score}")
+    print(f"index is {index}")
+    print(f"question is {question_arr[index]}")
+
     # If the search result is not exist
     if score < 50:
         index = get_best_response(question, notDetectedResponseList)
