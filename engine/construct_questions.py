@@ -55,3 +55,4 @@ def construct_relevant(collection):
         collection.create(item)
     
     print("Questions Construct Successed!!!")
+

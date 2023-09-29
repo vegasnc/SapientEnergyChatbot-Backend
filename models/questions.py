@@ -8,10 +8,8 @@ class Questions(object):
 
         self.fields = {
             "question": "string",
-            "relevant": "array",
+            "relevant": "string",
             "system_message": "string",
-            "created_at": "datetime",
-            "updated_at": "datetime"
         }
 
     def create(self, obj):
