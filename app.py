@@ -44,11 +44,14 @@ def get_api_answer():
     data = request.get_json()
     api = data["api"]
     question = data["question"]
+    format = data["format"]
+    stDate = data["stDate"]
+    enDate = data["enDate"]
 
     print("Question: " + api)
     
     # Get suitable data for generating answer
-    s_data = generate_answer.get_api_answer(api, question)
+    s_data = generate_answer.get_api_answer(api, format, question, stDate, enDate)
 
     if s_data == None:
         return {
@@ -79,4 +82,4 @@ def set_relevant_model():
 
 if __name__ == '__main__':
     print("Server is running 5000")
-    app.run()
+    app.run(debug=False)

@@ -35,19 +35,23 @@ def construct_relevant(collection):
     # Access the content
     response_column = question_data['Response']
     api_column = question_data['API']
+    format_column = question_data['Format']
 
-    keyword_list = []
+    print(format_column)
+
+    row = []
 
     for index in range(len(response_column)):
-        keyword_list.append(
+        row.append(
             {
                 "response": response_column[index],
-                "api": api_column[index]
+                "api": api_column[index],
+                "format": str(format_column[index])
             }
         )
     
     # Insert the data to database
-    for item in keyword_list:
+    for item in row:
         collection.create(item)
     
     print("Questions Construct Successed!!!")

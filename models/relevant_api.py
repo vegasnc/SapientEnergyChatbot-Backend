@@ -10,6 +10,7 @@ class RelevantAPI(object):
             "keyword": "array",
             "response": "string",
             "api": "string",
+            "format": "string",
             "created_at": "datetime",
             "updated_at": "datetime"
         }

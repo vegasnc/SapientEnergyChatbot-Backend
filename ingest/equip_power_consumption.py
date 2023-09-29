@@ -17,14 +17,16 @@ class EquipPowerConsumption:
     EndUsesClass = None
     DATE_FROM = "2022-05-01"
     DATE_NOW = datetime.now().strftime("%Y-%m-%d")
-    DATE_BEFORE_ONE_MONTH = (datetime.today() - timedelta(days=30)).strftime("%Y-%m-%d")
-    DATE_BEFORE_ONE_WEEK = (datetime.today() - timedelta(days=7)).strftime("%Y-%m-%d")
 
     def __init__(self) -> None:
         self.ExplorerClass = explorer_chart.ExplorerClass()
         self.ChartClass = chart_graph.ChatGraph()
         self.BuildingOverviewClass = building_overview.BuildingOverviewClass()
         self.EndUsesClass = end_uses.EndUsesClass()
+
+    def setDate(self, stDate, enDate):
+        self.DATE_FROM = stDate
+        self.DATE_NOW = enDate
         
         # Get all equipment information including power consumption
     def get_equip_power_consumption(self, date_from=DATE_FROM):
@@ -144,7 +146,7 @@ class EquipPowerConsumption:
     # Which equipment has shown the most improvement in power efficiency over time?
     def get_most_improvement_equipment(self, question):
         # Get all equipment power consumption
-        equip_list = self.get_equip_power_consumption(self.DATE_BEFORE_ONE_WEEK)
+        equip_list = self.get_equip_power_consumption(self.DATE_FROM)
 
         if equip_list != 404:
             # result array
@@ -180,7 +182,7 @@ class EquipPowerConsumption:
             return {
                 "question": question,
                 "answer" : season_cunsumption,
-                "unit": "w"
+                "unit" : "wh"
             }
         else:
             return 404
@@ -280,7 +282,7 @@ class EquipPowerConsumption:
             return {
                 "question" : question,
                 "answer" : average_consumption_by_type,
-                "unit" : "w"
+                "unit" : "wh"
             }
         else:
             return False
@@ -318,14 +320,14 @@ class EquipPowerConsumption:
                     "average_day" : average_day,
                     "average_night" : average_night,
                 },
-                "unit" : "w"
+                "unit" : "wh"
             }
         else:
             return 404
         
     # Have any of the equipment undergone a sudden increase in power consumption?
     def get_equipment_sudden_increase_consumption(self, question):
-        equip_list = self.get_equip_power_consumption(self.DATE_BEFORE_ONE_WEEK)
+        equip_list = self.get_equip_power_consumption(self.DATE_FROM)
         result = []
 
         if equip_list != 404:
@@ -366,13 +368,13 @@ class EquipPowerConsumption:
 
     # ???
     def get_building_energy_consumption_overall(self, question):
-        building_consumption_overall = self.ExplorerClass.overall_building_energy_consumption(self.DATE_BEFORE_ONE_MONTH, self.DATE_NOW)
+        building_consumption_overall = self.ExplorerClass.overall_building_energy_consumption(self.DATE_FROM, self.DATE_NOW)
 
         if building_consumption_overall != 404 and building_consumption_overall != 422:
             return {
                 "question" : question,
                 "answer" : building_consumption_overall,
-                "unit" : "w"
+                "unit" : "wh"
             }
         else:
             return False
@@ -385,18 +387,17 @@ class EquipPowerConsumption:
 
             for building in building_list:
                 building_consumption = self.ExplorerClass.overall_building_power_consumption_by_end_uses_category(building["building_id"], None, 
-                                                                                                                  self.DATE_BEFORE_ONE_MONTH, self.DATE_NOW)
+                                                                                                                  self.DATE_FROM, self.DATE_NOW)
 
                 if building_consumption != 404 and building_consumption != 422:
                     end_uses_category.append({
                                             "building_name" : building["building_name"],
                                             "end_uses_category" : building_consumption
                                         })
-                    
             return {
                 "question" : question,
                 "answer" : end_uses_category,
-                "unit" : "w"
+                "unit" : "wh"
             }
         else:
             return False
@@ -409,7 +410,7 @@ class EquipPowerConsumption:
 
             for building in building_list:
                 consumption = self.BuildingOverviewClass.energy_building_equipment_overview(building["building_id"], 
-                                                                                            self.DATE_BEFORE_ONE_MONTH, self.DATE_NOW)
+                                                                                            self.DATE_FROM, self.DATE_NOW)
                 
                 if consumption!= 404 and consumption!= 422:
                     equipment_consumption.append({
@@ -420,7 +421,7 @@ class EquipPowerConsumption:
             return {
                 "question" : question,
                 "answer" : equipment_consumption,
-                "unit" : "w"
+                "unit" : "wh"
             }
         else:
             return False
