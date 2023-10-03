@@ -24,7 +24,6 @@ TEXT_TABLE = "2"
 TEXT_PIECHART = "3"
 TEXT_BARCHART = "4"
 
-
 notDetectedResponseList = [
     "This question is about non-energy consummption.",
     "This question is about general business."
