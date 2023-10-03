@@ -2,10 +2,11 @@ from rake_nltk import Rake
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 from dotenv import dotenv_values
+from models import relevant_api # call model file
+
 import re
 import json
 import openai
-from models import relevant_api # call model file
 import engine.keyword_extract as keyword_extract
 import ingest.equip_power_consumption as equipment_power_consumption
 import ingest.ingest as ingest
