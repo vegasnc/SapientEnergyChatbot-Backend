@@ -74,7 +74,7 @@ def get_send_feedback():
     history = data["history"]
     rate_my_data = data["rate_my_data"]
     rate_my_ability = data["rate_my_ability"]
-    email = app.config['MAIL_USERNAME']
+    email = data["email"]
 
     gmailaddress = env_vars["MAIL_ADDRESS"]
     gmailpassword = env_vars["MAIL_PASSWORD"]
