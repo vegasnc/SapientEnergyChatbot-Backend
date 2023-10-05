@@ -26,12 +26,14 @@ TEXT_BARCHART = "4"
 
 notDetectedResponseList = [
     "This question is about non-energy consummption.",
-    "This question is about general business."
+    "This question is about general business.",
+    "This sentence is about user greetings."
 ]
 
 notDetectedSystemMSGList = [
     "Yes, this is a static test message 1.",
-    "Yes, this is a static test message 2."
+    "Yes, this is a static test message 2.",
+    "You are kind chatbot. You have to reply about the user greeting message. Very kindly and friendly.",
 ]
 
 # Get top ratio object
@@ -90,34 +92,40 @@ def get_answer(question, collection):
     if score < 50:
         index = get_best_response(question, notDetectedResponseList)
         system_msg = notDetectedSystemMSGList[index]
-        # response = openai.ChatCompletion.create(
-        #     model="gpt-3.5-turbo-16k",
-        #     messages=[
-        #         {
-        #             "role": "system",
-        #             "content": system_msg
-        #         },
-        #         {
-        #             "role": "user",
-        #             "content": question
-        #         }
-        #     ]
-        # )
+        print(f"Best Response index: {index}")
+        print(f"System Message: {system_msg}")
 
-        # if response and response.choices:
-        #     assistant_reply = response.choices[0].message["content"]
-        #     result = {
-        #         "answer": assistant_reply,
-        #         "api": []
-        #     }
-        #     return result
-        # else:
-        #     return None
+        if index == 2:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo-16k",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_msg
+                    },
+                    {
+                        "role": "user",
+                        "content": question
+                    }
+                ]
+            )
+
+            if response and response.choices:
+                assistant_reply = response.choices[0].message["content"]
+                result = {
+                    "answer": assistant_reply,
+                    "api": []
+                }
+                return result
+            else:
+                return None
 
         result = {
             "answer" : system_msg,
             "api" : []
         }
+
+        return result
     else:
         # ------------ Generate Answer Using ChatGPT ------------
         system_msg = result_arr[index]["system_message"]
