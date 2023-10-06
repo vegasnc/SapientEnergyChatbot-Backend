@@ -28,7 +28,7 @@ class EquipPowerConsumption:
         self.DATE_FROM = stDate
         self.DATE_NOW = enDate
         
-        # Get all equipment information including power consumption
+    # Get all equipment information including power consumption
     def get_equip_power_consumption(self, date_from=DATE_FROM):
         building_list = self.ExplorerClass.get_building()
 
@@ -182,7 +182,7 @@ class EquipPowerConsumption:
             return {
                 "question": question,
                 "answer" : season_cunsumption,
-                "unit" : "wh"
+                "unit" : "Wh"
             }
         else:
             return 404
@@ -282,7 +282,7 @@ class EquipPowerConsumption:
             return {
                 "question" : question,
                 "answer" : average_consumption_by_type,
-                "unit" : "wh"
+                "unit" : "Wh"
             }
         else:
             return False
@@ -320,7 +320,7 @@ class EquipPowerConsumption:
                     "average_day" : average_day,
                     "average_night" : average_night,
                 },
-                "unit" : "wh"
+                "unit" : "Wh"
             }
         else:
             return 404
@@ -337,7 +337,7 @@ class EquipPowerConsumption:
                         "equipment_name" : item["equipment_name"],
                         "consumption_old" : item["consumption"]["old"],
                         "consumption_now" : item["consumption"]["now"],
-                        "consumption_unit" : "w",
+                        "consumption_unit" : "Wh",
                         "change_percentage" : item["consumption"]["change"]
                     })
 
@@ -374,7 +374,7 @@ class EquipPowerConsumption:
             return {
                 "question" : question,
                 "answer" : building_consumption_overall,
-                "unit" : "wh"
+                "unit" : "Wh"
             }
         else:
             return False
@@ -397,7 +397,7 @@ class EquipPowerConsumption:
             return {
                 "question" : question,
                 "answer" : end_uses_category,
-                "unit" : "wh"
+                "unit" : "Wh"
             }
         else:
             return False
@@ -421,7 +421,7 @@ class EquipPowerConsumption:
             return {
                 "question" : question,
                 "answer" : equipment_consumption,
-                "unit" : "wh"
+                "unit" : "Wh"
             }
         else:
             return False

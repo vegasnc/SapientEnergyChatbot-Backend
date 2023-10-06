@@ -297,18 +297,16 @@ def generate_answer_from_openai(data):
 
     text = "\n".join([f"{item['key']}: {json.dumps(item['value'])}" for item in data])
 
-    print(text)
-
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
         messages=[
             {
-                "role": "system", 
-                "content": text
+                "role": "system",
+                "content": 'You are an energy chatbot that helps tally power and energy consumption. Please provide a human readable sentence of this data. Should be understandable to 18 year old, and include almost of the data. In the data, there are question and the data. You must reference the data for generating answer. There are lots of data not related with question in the data. So you have to reference only related data. In the data, there is key related with question. So you must reference this value of key from data. Not reference all data. No warnings, no other text shold be present in your answer. All values representing electric power and energy consumption are Wh(watt-hours). But all values representing electric power and energy consumption must be converted to KWh(kilowatt-hours). 1000Wh is 1KWh. Therefore, all values representing electric power and energy consumption must be divided by 1000. Convert the all energy consumption from Wh(watt-hours) to kWh(kilowatt-hours). You must divide all values, even if the values are less than 1000. Please do not use original Wh(watt-hours) values.'
             },
             {
                 "role": "user", 
-                "content": 'Please provide a human readable sentence of this data. Should be understandable to 18 year old, and include almost of the data. In the data, there are question and the data. You must reference the data for generating answer. There are lots of data not related with question in the data. So you have to reference only related data. In the data, there is key related with question. So you must reference this value of key from data. Not reference all data. No warnings, no other text shold be present in your answer. Now the power and energy unit are all wh. But you have to display the value to Kwh.'
+                "content": text
             },
         ],
     )
