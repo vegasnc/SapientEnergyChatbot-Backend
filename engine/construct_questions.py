@@ -10,6 +10,7 @@ def construct_questions(collection):
     relevant_column1 = question_data['Relevant1']
     relevant_column2 = question_data['Relevant2']
     system_message_column = question_data['SystemMessage']
+    static_column = question_data['Static']
 
     keyword_list = []
 
@@ -18,7 +19,8 @@ def construct_questions(collection):
             {
                 "question": question_column[index],
                 "relevant": [relevant_column0[index], relevant_column1[index], relevant_column2[index]],
-                "system_message": system_message_column[index]
+                "system_message": system_message_column[index],
+                "is_static_message": static_column[index] == "0"
             }
         )
     

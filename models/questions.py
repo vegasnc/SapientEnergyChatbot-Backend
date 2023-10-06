@@ -10,6 +10,7 @@ class Questions(object):
             "question": "string",
             "relevant": "string",
             "system_message": "string",
+            "is_static_message": "boolean"
         }
 
     def create(self, obj):
