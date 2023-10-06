@@ -88,6 +88,14 @@ def get_answer(question, collection):
     print(f"index is {index}")
     print(f"question is {question_arr[index]}")
 
+    # If it is static message, return static response
+    if result_arr[index]['is_static_message'] :
+        result = {
+            "answer" : result_arr[index]['system_message'],
+            "api": []
+        }
+        return result
+
     # If the search result is not exist
     if score < 50:
         index = get_best_response(question, notDetectedResponseList)
