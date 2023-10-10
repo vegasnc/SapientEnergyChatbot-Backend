@@ -9,6 +9,7 @@ class RelevantAPI(object):
         self.fields = {
             "keyword": "array",
             "response": "string",
+            "title": "string",
             "api": "string",
             "format": "string",
             "created_at": "datetime",

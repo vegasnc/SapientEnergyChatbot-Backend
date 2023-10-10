@@ -38,17 +38,19 @@ def construct_relevant(collection):
     response_column = question_data['Response']
     api_column = question_data['API']
     format_column = question_data['Format']
-
-    print(format_column)
+    title_column = question_data['Title']
 
     row = []
 
     for index in range(len(response_column)):
+
+        print(title_column[index])
         row.append(
             {
                 "response": response_column[index],
                 "api": api_column[index],
-                "format": str(format_column[index])
+                "format": str(format_column[index]),
+                "title": "" if pd.isnull(title_column[index]) else title_column[index] 
             }
         )
     

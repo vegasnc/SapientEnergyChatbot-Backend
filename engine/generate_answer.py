@@ -147,7 +147,8 @@ def get_answer(question, collection):
                 api_arr.append({
                     "response" : relevant,
                     "api" : result["api"],
-                    "format" : result["format"]
+                    "format" : result["format"],
+                    "title" : result["title"],
                 })
 
         response = openai.ChatCompletion.create(
