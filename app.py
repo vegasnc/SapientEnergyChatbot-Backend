@@ -25,6 +25,8 @@ def get_answer():
     # Access the request data
     data = request.get_json()
     question = data["question"]
+    stDate = data["stDate"]
+    enDate = data["enDate"]
 
     print("Question: " + question)
     
@@ -32,7 +34,7 @@ def get_answer():
     # s_data = generate_answer.get_answer(question, keyword_intent)
 
     # Generate answer using ChatGPT
-    s_data = generate_answer.get_answer(question, question_model)
+    s_data = generate_answer.get_answer(question, question_model, stDate, enDate)
 
     if s_data == None:
         return {

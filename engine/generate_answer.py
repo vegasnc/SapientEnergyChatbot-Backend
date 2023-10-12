@@ -62,20 +62,10 @@ def get_top_ratio_item(documents, keyword_arr):
     return res_obj
 
 # Generate answer from question
-def get_answer(question, collection):
+def get_answer(question, collection, stDate, enDate):
 
-    # Extract keyword for searching API
-    result_arr = collection.find({})
-    question_arr = []
-    for item in result_arr:
-        question_arr.append(item["question"])
-
-    score, index = get_best_question(question, question_arr)
-
+    # If the question is required real person answer, please return static message.
     question_category = get_question_category(question)
-
-    print(f"Question Category: {question_category}")
-
     if question_category == 1:
         # Want to talk to real person
         result = {
@@ -83,21 +73,95 @@ def get_answer(question, collection):
             "api": []
         }
         return result
+    
+    # Extract keyword for searching API
+    index = 1
+    question_template = ""
+    result_arr = collection.find({})
+    for item in result_arr:
+        question_template += f"'{index}. {item['question']}'"
+        index += 1
 
-    print(f"score is {score}")
-    print(f"index is {index}")
-    print(f"question is {question_arr[index]}")
+    # If the question is same with relevant api response, return api answer
+    relevant_arr = relevant_model.find({})
+    for item in relevant_arr:
+        question_template += f"'{index}. {item['response']}', "
+        index += 1
+        # title_arr.append(relevant_item["title"])
+    for item in relevant_arr:
+        question_template += f"'{index}. {item['title']}', "
+        index += 1
 
-    # If it is static message, return static response
-    if result_arr[index]['is_static_message'] :
-        result = {
-            "answer" : result_arr[index]['system_message'],
-            "api": []
-        }
-        return result
+    score, index = get_best_question(question, question_template)
 
-    # If the search result is not exist
-    if score < 50:
+    print(f"Question Score : {score}, Index : {index}")
+
+    if score > 50:
+        # If index is less than result_arr size, the question is smiliar to questions
+        question_len = len(result_arr)
+        response_len = len(relevant_arr)
+        if index < question_len:
+            # If it is static message, return static response
+            if result_arr[index]['is_static_message'] :
+                result = {
+                    "answer" : result_arr[index]['system_message'],
+                    "api": []
+                }
+                return result
+
+            # ------------ Generate Answer Using ChatGPT ------------
+            system_msg = result_arr[index]["system_message"]
+            relevant_arr = result_arr[index]["relevant"]
+            api_arr = []
+            result = []
+
+            for relevant in relevant_arr:
+                result = relevant_model.find_one({"response": relevant})
+                if result != None:
+                    api_arr.append({
+                        "response" : relevant,
+                        "api" : result["api"],
+                        "format" : result["format"],
+                        "title" : result["title"],
+                    })
+
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo-16k",
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": system_msg
+                    },
+                    {
+                        "role": "user", 
+                        "content": question
+                    },
+                ],
+            )
+
+            if response and response.choices:
+                assistant_reply = response.choices[0].message["content"]
+                result = {
+                        "answer" : assistant_reply,
+                        "api" : api_arr
+                    }
+                return result
+            else:
+                return None
+        # If the question is similar to response
+        elif index >= question_len and index < (question_len + response_len):
+            return {
+                "answer" : get_api_answer(relevant_arr[index - question_len]["api"], 0, question, stDate, enDate),
+                "api" : []
+            }
+        # If the question is similar to short title
+        elif index >= (question_len + response_len) and index < (question_len + 2 * response_len):
+            return {
+                "answer" : get_api_answer(relevant_arr[index - question_len - response_len]["api"], 0, question, stDate, enDate),
+                "api" : []
+            }
+    else:
+        # If the question is not exist, return OpenAI response
         index = get_best_response(question, notDetectedResponseList)
         system_msg = notDetectedSystemMSGList[index]
         print(f"Best Response index: {index}")
@@ -134,48 +198,6 @@ def get_answer(question, collection):
         }
 
         return result
-    else:
-        # ------------ Generate Answer Using ChatGPT ------------
-        system_msg = result_arr[index]["system_message"]
-        relevant_arr = result_arr[index]["relevant"]
-        api_arr = []
-        result = []
-
-        for relevant in relevant_arr:
-            result = relevant_model.find_one({"response": relevant})
-            if result != None:
-                api_arr.append({
-                    "response" : relevant,
-                    "api" : result["api"],
-                    "format" : result["format"],
-                    "title" : result["title"],
-                })
-
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k",
-            messages=[
-                {
-                    "role": "system", 
-                    "content": system_msg
-                },
-                {
-                    "role": "user", 
-                    "content": question
-                },
-            ],
-        )
-
-        if response and response.choices:
-            assistant_reply = response.choices[0].message["content"]
-            result = {
-                    "answer" : assistant_reply,
-                    "api" : api_arr
-                }
-            return result
-        else:
-            return None
-        
-    return None
 
 def get_api_answer(api, format, question, stDate, enDate):
 
@@ -316,7 +338,7 @@ def generate_answer_from_openai(data):
             {
                 "role": "user", 
                 "content": text
-            },
+            }
         ],
     )
         
@@ -327,33 +349,25 @@ def generate_answer_from_openai(data):
         return "Error"
     
 # Function to get the best question and its index
-def get_best_question(question, question_list):
-    # Initialize variables to store the best response and its index
-    best_response_index = -1
-    best_response_score = -1.0  # Initialize with a low score
-
-    for i, response in enumerate(question_list):
+def get_best_question(question, question_template):
+    # for i, response in enumerate(question_list):
         # Generate a response from GPT-3 for the given question and response
         # prompt = f"the myQuestion is : '{question}' \n the myAnswer is : {response}.\n please score from 0 to 100 how much the myAnswer is the correct answer of the myQuestion.\n  your response must be like : Score = score "
-        prompt = f"The myQuestion is : '{question}' \n the myQuestionTemplate is : {response}.\n Please rate from 0 to 100 how similar myQuestion is to myQuestionTemplate.\n  Your response must be like : Score = score "
-        completion = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=prompt,
-            temperature=0.9,
-            max_tokens=256
-        )
-        score = re.findall(r'\d+' , completion.choices[0].text.strip())
-        if len(score):
-            try:
-                score = int(score[0])
-                if score > best_response_score:
-                    best_response_score = score
-                    best_response = response
-                    best_response_index = i
-            except:
-                pass
+        # prompt = f"The myQuestion is : '{question}' \n the myQuestionTemplate is : {response}.\n Please rate from 0 to 100 how similar myQuestion is to myQuestionTemplate.\n  Your response must be like : Score = score "
+    prompt = f"The myQuestion is : '{question}' \n the myQuestionTemplate list is : {question_template}\n Please rate from 0 to 100 how similar myQuestion is to myQuestionTemplate.\n  Your response must be like :Index = index, Score = score "
+    completion = openai.Completion.create(
+        model="text-davinci-003",
+        prompt=prompt,
+        temperature=0.7,
+        max_tokens=256
+    )
+    number = re.findall(r'\d+' , completion.choices[0].text.strip())
+    if len(number):
+        index = int(number[0]) - 1
+        score = int(number[1])
+        return score, index
+    return -1, -1
 
-    return best_response_score, best_response_index
 
 # Function to detect the date request question
 def get_question_category(question):
