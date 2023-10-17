@@ -3,6 +3,7 @@ import openai
 import os
 import json
 import datetime
+import requests
 import apis.constapis as constapi
 import apis.userapi as userapi
 import apis.explorer_chart as explorer_chart
@@ -10,6 +11,7 @@ import apis.explorer_chart as explorer_chart
 class IngestDataClass:
     UserAPIClass = None
     ExplorerChartClass = None
+    ConstAPIClass = None
     DATE_FROM = "1900-01-01"
     DATE_NOW = datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -19,6 +21,7 @@ class IngestDataClass:
         
         # login for ingesting
         self.UserAPIClass = userapi.UserAPI()
+        self.ConstAPIClass = constapi.APIClass()
         response = self.UserAPIClass.signin(os.getenv("LOGIN_USER_NAME"), os.getenv("LOGIN_PASSWORD"))
         user_token = response["data"]["token"]
         constapi.USER_TOKEN = user_token
@@ -90,7 +93,7 @@ class IngestDataClass:
         
         return merged_data
     
-    def ingest_data(self):
+    def get_equipment_list(self):
         #  -------------------------------- Explorer Chart API --------------------------------
         final_data = []
         # Get building data
@@ -98,61 +101,31 @@ class IngestDataClass:
 
         # Get building total energy consumption data
         for building in response:
-            building_name = building["building_name"]
             building_id = building["building_id"]
-
-            # Get building full json data
-            total_energy_consumption = self.ExplorerChartClass.get_building_list(str(self.DATE_FROM), str(self.DATE_NOW), building_name)
-            building_data = building.copy()
-            if len(total_energy_consumption) != 0:
-                building_data = self.merge_json_data(building, total_energy_consumption[0])
-            
-            # Get processed building data
-            building_data = self.process_data(building_data)
-
             # Get equipment data
             equipment_list = self.ExplorerChartClass.get_equipment_list(building_id, str(self.DATE_FROM), str(self.DATE_NOW))
+
+            final_data.extend(equipment_list["data"])
             
-            equipment_data = []
-            for item in equipment_list["data"]:
-                equipment_data.append(self.process_data(item))
-                
-            print("\n------------------------------ total energy consumption -------------------------------\n")
-            print(f"{equipment_data}")
+        return final_data
+    
+    def get_equipment_type(self):
+        result = []
+        response = requests.get(constapi.BASE_URL + constapi.GET_EQUIPMENT_TYPE, headers=self.ConstAPIClass.getHeader())
+        if response.status_code == 200:
+            data = response.json()
+            for item in data["data"]:
+                if item["equipment_count"] != 0:
+                    result.append(item)
+            return result
+        else:
+            return None
+        
+    def get_end_use(self):
+        response = requests.get(constapi.BASE_URL + constapi.GET_END_USE, headers=self.ConstAPIClass.getHeader())
+        if response.status_code == 200:
+            data = response.json()
+            return data
+        else:
+            return None
 
-            final_data.append(
-                [
-                    {
-                        "key": "building",
-                        "value": building_data,
-                        "readable": self.get_readable(building_data)
-                    },
-                    {
-                        "key": "equipment",
-                        "value": equipment_data
-                    }
-                ]
-            )
-            # final_data.append(self.process_data(building))
-
-        # Specify the filename
-        filename = "data.json"
-        with open(filename, "w") as json_file:
-            json.dump(final_data, json_file, indent=4)
-        print(f"JSON data has been written to {filename}")
-
-        # print("\n------------------------------ Final -------------------------------\n")
-        # print(f"{final_data}")
-
-# for building in response:
-#     for key, value in building.items():
-#         print(f"{key}, {value}")
-#     print("------")
-
-# response = ExplorerChartClass.get_building_list("", "power", "consumption", "dce", 
-#                                                 "2022-01-01", "2023-12-31", [""])
-# response = ExplorerChartClass.get_building(True)
-# response[0]["building_id"]
-# response = ExplorerChartClass.equipment_ytd_usage("63920fbadc085066bf9781dc", "6357ffd71ce19dc07713433a", "2022-01-01", "2023-12-31")
-# print(response)
-# -------------------------------------------------------------------------------------

@@ -543,3 +543,4 @@ class EquipPowerConsumption:
             }
         else:
             return 404
+        

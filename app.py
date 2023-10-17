@@ -54,11 +54,13 @@ def get_api_answer():
     format = data["format"]
     stDate = data["stDate"]
     enDate = data["enDate"]
+    type_id = data["type_id"]
+    type_name = data["type_name"]
 
     print("Question: " + api)
     
     # Get suitable data for generating answer
-    s_data = generate_answer.get_api_answer(api, format, question, stDate, enDate)
+    s_data = generate_answer.get_api_answer(api, format, question, stDate, enDate, type_id, type_name)
 
     if s_data == None:
         return {
@@ -104,6 +106,27 @@ def get_send_feedback():
             "result": "false"
         }, 200
 
+@app.route('/api/get_equipment_list', methods=['POST'])
+def get_equipment_list():
+    equip_data = generate_answer.get_equipment_list()
+    return {
+        "result": equip_data
+    }, 200
+
+@app.route('/api/get_equipment_type', methods=['POST'])
+def get_equipment_type():
+    equip_type = generate_answer.get_equipment_type()
+    return {
+        "result": equip_type
+    }, 200
+
+@app.route('/api/get_end_use', methods=['POST'])
+def get_end_use():
+    end_use = generate_answer.get_end_use()
+    return {
+        "result": end_use
+    }, 200
+
 # --------------- Building database --------------- 
 @app.route('/model/question', methods=['GET'])
 def set_question_model():
@@ -116,7 +139,6 @@ def set_question_model():
 @app.route('/model/relevant', methods=["GET"])
 def set_relevant_model():
     construct_questions.construct_relevant(relevant_model)
-
     return {
         "answer": "Success! "
     }, 200

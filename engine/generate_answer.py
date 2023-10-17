@@ -115,7 +115,10 @@ def get_answer(question, collection, stDate, enDate):
             api_arr = []
             result = []
 
+            print(f"Relevant array lenth = {len(relevant_arr)}")
+
             for relevant in relevant_arr:
+                print(f"Relevant api title = {relevant}")
                 result = relevant_model.find_one({"response": relevant})
                 if result != None:
                     api_arr.append({
@@ -123,7 +126,10 @@ def get_answer(question, collection, stDate, enDate):
                         "api" : result["api"],
                         "format" : result["format"],
                         "title" : result["title"],
+                        "dropdown" : result["dropdown"]
                     })
+
+            print(f"API length = {len(api_arr)}")
 
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo-16k",
@@ -199,7 +205,7 @@ def get_answer(question, collection, stDate, enDate):
 
         return result
 
-def get_api_answer(api, format, question, stDate, enDate):
+def get_api_answer(api, format, question, stDate, enDate, type_id, type_name):
 
     EquipmentPowerConsumption.setDate(stDate, enDate)
     
@@ -414,3 +420,16 @@ def get_best_response(question, response_list):
                 pass
 
     return best_response_index
+
+# For prepopulated data
+def get_equipment_list():
+    equip_data = IngestClass.get_equipment_list()
+    return equip_data
+
+def get_equipment_type():
+    equip_type = IngestClass.get_equipment_type()
+    return equip_type
+
+def get_end_use():
+    end_use_data = IngestClass.get_end_use()
+    return end_use_data

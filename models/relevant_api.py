@@ -12,6 +12,7 @@ class RelevantAPI(object):
             "title": "string",
             "api": "string",
             "format": "string",
+            "dropdown": "string",
             "created_at": "datetime",
             "updated_at": "datetime"
         }

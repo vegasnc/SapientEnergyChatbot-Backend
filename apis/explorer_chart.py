@@ -86,6 +86,8 @@ class ExplorerClass:
             "consumption": consumption,
             "order_by": order_by,
             "sort_by": sort_by,
+            "page_size": 1000,
+            "page_no": 1
         }
 
         data = {

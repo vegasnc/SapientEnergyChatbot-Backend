@@ -47,6 +47,7 @@ GET_CHART_DATA = '/api/energy/chart'
 
 # config
 CONFIG_METADATA='/api/config/metadata'
+GET_EQUIPMENT_TYPE = '/api/config/get_equipment_type'
 
 #Time of day
 GET_HOURLY_DATA='/api/energy/time_of_day/hourly'
@@ -57,5 +58,7 @@ GET_END_USE_CATEGORY = "/api/energy/portfolio/end-uses-info"
 
 #Building Overview
 GET_ENERGY_BUILDING_EQUIPMENT = "/api/energy/building/equipment"
-
 GET_ENERGY_ENDUSE_LOAD_USAGE = "/api/energy/end_use/load_usage"
+
+# Helper APIs
+GET_END_USE = "/api/config/get_end_use"
