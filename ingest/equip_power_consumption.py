@@ -59,40 +59,33 @@ class EquipPowerConsumption:
             return False
         
     # Which equipment consumes the most power on a regular basis?
-    def get_most_consumption_equipment(self, question):
-        building_list = self.ExplorerClass.get_building()
+    def get_most_consumption_equipment(self, question, building_id, type_id):
+        equip_list = []
+        top_equip = {}
+        old_ytd = 0
 
-        if building_list != 404:
-            equip_list = []
-            top_equip = {}
-            old_ytd = 0
+        equip_list.append([building_id, self.ExplorerClass.get_equipment_list(building_id, self.DATE_FROM, self.DATE_NOW)["data"]])
 
-            # Get equipment from building id
-            for building in building_list:
-                equip_list.append([building["building_id"], self.ExplorerClass.get_equipment_list(building["building_id"], self.DATE_FROM, self.DATE_NOW)["data"]])
+        # Get YTD of equipment from equipment id
+        for item in equip_list:
+            building_id = item[0]
+            equip = item[1]
 
-            # Get YTD of equipment from equipment id
-            for item in equip_list:
-                building_id = item[0]
-                equip = item[1]
+            if len(equip) > 0:
+                temp = self.ExplorerClass.equipment_ytd_usage(equip[0]["equipment_id"], building_id, self.DATE_FROM, self.DATE_NOW)
 
-                if len(equip) > 0:
-                    temp = self.ExplorerClass.equipment_ytd_usage(equip[0]["equipment_id"], building_id, self.DATE_FROM, self.DATE_NOW)
+                if "data" in temp:
+                    ytd = temp["data"][0]["ytd"]["ytd"]
 
-                    if "data" in temp:
-                        ytd = temp["data"][0]["ytd"]["ytd"]
+                    if( ytd > old_ytd ):
+                        old_ytd = ytd
+                        equip.extend(temp["data"][0])
+                        top_equip = equip[0]
 
-                        if( ytd > old_ytd ):
-                            old_ytd = ytd
-                            equip.extend(temp["data"][0])
-                            top_equip = equip[0]
-
-            return {
-                "question" : question,
-                "answer" : top_equip
-            }
-        else:
-            return 404
+        return {
+            "question" : question,
+            "answer" : top_equip
+        }
 
     def get_y_key(self, x) :
         if x["y"] == "":
@@ -219,39 +212,33 @@ class EquipPowerConsumption:
             return 404
     
     # Is there any noticeable difference in power consumption between weekdays and weekends?
-    def get_power_consumption_weekdays_weekend(self, question):
-        building_list = self.ExplorerClass.get_building()
+    def get_power_consumption_weekdays_weekend(self, question, building_id, building_name, type_id):
+        building_data = []
 
-        if building_list != 404:
-            building_data = []
+        # Get equipment from building id
+        chart_data = self.ChartClass.get_hourly_data(self.DATE_FROM, self.DATE_NOW, building_id)
 
-            # Get equipment from building id
-            for building in building_list:
-                chart_data = self.ChartClass.get_hourly_data(self.DATE_FROM, self.DATE_NOW, building["building_id"])
+        # Get weekday and weekend consumption average
+        weekdays_data = chart_data[0]["weekdays"]
+        weekend_data = chart_data[0]["weekend"]
 
-                # Get weekday and weekend consumption average
-                weekdays_data = chart_data[0]["weekdays"]
-                weekend_data = chart_data[0]["weekend"]
+        weekday_arr = np.array([item["y"] if item["y"] != "" else 0 for item in weekdays_data])
+        weekend_arr = np.array([item["y"] if item["y"] != "" else 0 for item in weekend_data])
 
-                weekday_arr = np.array([item["y"] if item["y"] != "" else 0 for item in weekdays_data])
-                weekend_arr = np.array([item["y"] if item["y"] != "" else 0 for item in weekend_data])
+        # Get weekday average and weekend average
+        weekday_avg = np.mean(weekday_arr)
+        weekend_avg = np.mean(weekend_arr)
 
-                # Get weekday average and weekend average
-                weekday_avg = np.mean(weekday_arr)
-                weekend_avg = np.mean(weekend_arr)
+        building_data.append({
+            "building_name" : building_name,
+            "weekday_average_power_consumption" : weekday_avg,
+            "weekend_average_power_consumption" : weekend_avg,
+        })
 
-                building_data.append({
-                    "building_name" : building["building_name"],
-                    "weekday_average_power_consumption" : weekday_avg,
-                    "weekend_average_power_consumption" : weekend_avg,
-                })
-
-            return {
-                "question" : question,
-                "answer" : building_data
-            }
-        else:
-            return 404
+        return {
+            "question" : question,
+            "answer" : building_data
+        }
 
     # How does power consumption vary between different equipment brand within our organization?
     def get_power_consumption_between_equip_type(self, question):
@@ -379,69 +366,51 @@ class EquipPowerConsumption:
         else:
             return False
         
-    def get_building_energy_consumption_by_end_uses_category(self, question):
-        building_list = self.ExplorerClass.get_building()
+    def get_building_energy_consumption_by_end_uses_category(self, question, building_id, building_name, type_id):
+        end_uses_category = []
 
-        if building_list != 404:
-            end_uses_category = []
+        building_consumption = self.ExplorerClass.overall_building_power_consumption_by_end_uses_category(building_id, None, 
+                                                                                                            self.DATE_FROM, self.DATE_NOW)
 
-            for building in building_list:
-                building_consumption = self.ExplorerClass.overall_building_power_consumption_by_end_uses_category(building["building_id"], None, 
-                                                                                                                  self.DATE_FROM, self.DATE_NOW)
-
-                if building_consumption != 404 and building_consumption != 422:
-                    end_uses_category.append({
-                                            "building_name" : building["building_name"],
-                                            "end_uses_category" : building_consumption
-                                        })
-            return {
-                "question" : question,
-                "answer" : end_uses_category,
-                "unit" : "Wh"
-            }
-        else:
-            return False
+        if building_consumption != 404 and building_consumption != 422:
+            end_uses_category.append({
+                                    "building_name" : building_name,
+                                    "end_uses_category" : building_consumption
+                                })
+        return {
+            "question" : question,
+            "answer" : end_uses_category,
+            "unit" : "Wh"
+        }
         
-    def get_energy_building_equipment(self, question):
-        building_list = self.ExplorerClass.get_building()
+    def get_energy_building_equipment(self, question, building_id, building_name, type_id):
+        equipment_consumption = []
 
-        if building_list != 404:
-            equipment_consumption = []
-
-            for building in building_list:
-                consumption = self.BuildingOverviewClass.energy_building_equipment_overview(building["building_id"], 
-                                                                                            self.DATE_FROM, self.DATE_NOW)
+        consumption = self.BuildingOverviewClass.energy_building_equipment_overview(building_id, 
+                                                                                    self.DATE_FROM, self.DATE_NOW)
+        
+        if consumption!= 404 and consumption!= 422:
+            equipment_consumption.append({
+                                    "building_name" : building_name,
+                                    "equipment_consumption" : consumption
+                                })
                 
-                if consumption!= 404 and consumption!= 422:
-                    equipment_consumption.append({
-                                            "building_name" : building["building_name"],
-                                            "equipment_consumption" : consumption
-                                        })
-                    
-            return {
-                "question" : question,
-                "answer" : equipment_consumption,
-                "unit" : "Wh"
-            }
-        else:
-            return False
+        return {
+            "question" : question,
+            "answer" : equipment_consumption,
+            "unit" : "Wh"
+        }
         
     # Return top 5 pieces of equipment that contribute most to energy consumption of a specific end use category
-    def get_explorer_equip_power_consumption(self, question, date_from=DATE_FROM):
-        building_list = self.ExplorerClass.get_building()
+    def get_explorer_equip_power_consumption(self, question, building_id, date_from=DATE_FROM):
+        equip_list = []
 
-        if building_list != 404:
-            equip_list = []
+        equip_list.extend(self.ExplorerClass.get_equipment_list(building_id, date_from, self.DATE_NOW)["data"])
 
-            for building in building_list:
-                equip_list.extend(self.ExplorerClass.get_equipment_list(building["building_id"], date_from, self.DATE_NOW)["data"])
-
-            return {
-                "question" : question,
-                "answer" : equip_list
-            }
-        else:
-            return 404
+        return {
+            "question" : question,
+            "answer" : equip_list
+        }
         
     def get_hvac_end_use_category_energy_consumption(self, question):
         building_list = self.ExplorerClass.get_building()

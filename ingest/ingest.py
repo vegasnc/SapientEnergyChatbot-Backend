@@ -1,4 +1,8 @@
 from dotenv import load_dotenv
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from requests import Session
+
 import openai
 import os
 import json
@@ -14,6 +18,13 @@ class IngestDataClass:
     ConstAPIClass = None
     DATE_FROM = "1900-01-01"
     DATE_NOW = datetime.datetime.now().strftime("%Y-%m-%d")
+    session = Session()
+    retries = Retry(
+        total=5,
+        backoff_factor=1,
+        status_forcelist=[502, 503, 504]
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retries))
 
     def __init__(self) -> None:
         load_dotenv()
@@ -22,9 +33,9 @@ class IngestDataClass:
         # login for ingesting
         self.UserAPIClass = userapi.UserAPI()
         self.ConstAPIClass = constapi.APIClass()
-        response = self.UserAPIClass.signin(os.getenv("LOGIN_USER_NAME"), os.getenv("LOGIN_PASSWORD"))
-        user_token = response["data"]["token"]
-        constapi.USER_TOKEN = user_token
+        # response = self.UserAPIClass.signin(os.getenv("LOGIN_USER_NAME"), os.getenv("LOGIN_PASSWORD"))
+        # user_token = response["data"]["token"]
+        # constapi.USER_TOKEN = user_token
 
         # init explorer chart class
         self.ExplorerChartClass = explorer_chart.ExplorerClass()
@@ -93,6 +104,10 @@ class IngestDataClass:
         
         return merged_data
     
+    def get_building_data(self):
+        response = self.ExplorerChartClass.get_building(False)
+        return response
+    
     def get_equipment_list(self):
         #  -------------------------------- Explorer Chart API --------------------------------
         final_data = []
@@ -111,7 +126,10 @@ class IngestDataClass:
     
     def get_equipment_type(self):
         result = []
-        response = requests.get(constapi.BASE_URL + constapi.GET_EQUIPMENT_TYPE, headers=self.ConstAPIClass.getHeader())
+        # response = requests.request("GET", constapi.BASE_URL + constapi.GET_EQUIPMENT_TYPE,
+        #                     headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.get(constapi.BASE_URL + constapi.GET_EQUIPMENT_TYPE, 
+                                     timeout=30, headers=self.ConstAPIClass.getHeader())
         if response.status_code == 200:
             data = response.json()
             for item in data["data"]:
@@ -122,7 +140,10 @@ class IngestDataClass:
             return None
         
     def get_end_use(self):
-        response = requests.get(constapi.BASE_URL + constapi.GET_END_USE, headers=self.ConstAPIClass.getHeader())
+        # response = requests.request("GET", constapi.BASE_URL + constapi.GET_END_USE,
+        #             headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.get(constapi.BASE_URL + constapi.GET_END_USE, 
+                                     timeout=30, headers=self.ConstAPIClass.getHeader())
         if response.status_code == 200:
             data = response.json()
             return data

@@ -6,6 +6,8 @@ from models import relevant_api # call model file
 from flask_cors import CORS # to avoid cors error in different frontend like react js or any other
 from dotenv import dotenv_values
 
+import apis.userapi as userapi
+import apis.constapis as constapis
 import engine.construct_questions as construct_questions
 import engine.generate_answer as generate_answer
 import smtplib
@@ -19,6 +21,23 @@ env_vars = dotenv_values('.env')
 keyword_intent = keyword_intent.KeywordIntent()
 question_model = questions.Questions()
 relevant_model = relevant_api.RelevantAPI()
+UserAPIClass = userapi.UserAPI()
+ConstAPIClass = constapis.APIClass()
+
+global mBuildingData
+global mEquipType
+global mEndUse
+mBuildingData = None
+mEquipType = None
+mEndUse = None
+
+@app.route('/api/get_prepopulated_data', methods=['POST'])
+def get_prepopulated_data():
+    return {
+        "building_data" : mBuildingData,
+        "equip_type" : mEquipType,
+        "end_use" : mEndUse,
+    }, 200
 
 @app.route('/api/get_answer', methods=['POST'])
 def get_answer():
@@ -38,7 +57,7 @@ def get_answer():
 
     if s_data == None:
         return {
-            "answer": "I'm sorry, your question is not registered in my database. I will inform administrator of this question."
+            "answer": "I apologize for the inconvenience, but I'm unable to assist with navigating across the platform at the moment. It's possible that you may require personalized guidance for this. To ensure you get the help you need, I recommend reaching out to our support team. They have the expertise to assist you with platform navigation and any other questions you may have. They'll be glad to guide you further. Is there anything else I can assist you with today?"
         }, 200
     else:
         return {
@@ -56,15 +75,19 @@ def get_api_answer():
     enDate = data["enDate"]
     type_id = data["type_id"]
     type_name = data["type_name"]
+    building_id = data["building_id"]
+    building_name = data["building_name"]
 
     print("Question: " + api)
+
+    print(f"Building infor: id: {building_id}, name: {building_name}, type_id: {type_id}, type_name: {type_name}")
     
     # Get suitable data for generating answer
-    s_data = generate_answer.get_api_answer(api, format, question, stDate, enDate, type_id, type_name)
+    s_data = generate_answer.get_api_answer(api, format, question, stDate, enDate, building_id, building_name, type_id, type_name)
 
     if s_data == None:
         return {
-            "answer": "I'm sorry, your question is not registered in my database. I will inform administrator of this question."
+            "answer": "I apologize for the inconvenience, but I'm unable to assist with navigating across the platform at the moment. It's possible that you may require personalized guidance for this. To ensure you get the help you need, I recommend reaching out to our support team. They have the expertise to assist you with platform navigation and any other questions you may have. They'll be glad to guide you further. Is there anything else I can assist you with today?"
         }, 200
     else:
         return {
@@ -106,27 +129,6 @@ def get_send_feedback():
             "result": "false"
         }, 200
 
-@app.route('/api/get_equipment_list', methods=['POST'])
-def get_equipment_list():
-    equip_data = generate_answer.get_equipment_list()
-    return {
-        "result": equip_data
-    }, 200
-
-@app.route('/api/get_equipment_type', methods=['POST'])
-def get_equipment_type():
-    equip_type = generate_answer.get_equipment_type()
-    return {
-        "result": equip_type
-    }, 200
-
-@app.route('/api/get_end_use', methods=['POST'])
-def get_end_use():
-    end_use = generate_answer.get_end_use()
-    return {
-        "result": end_use
-    }, 200
-
 # --------------- Building database --------------- 
 @app.route('/model/question', methods=['GET'])
 def set_question_model():
@@ -146,4 +148,10 @@ def set_relevant_model():
 
 if __name__ == '__main__':
     print("Server is running 5000")
+    token = UserAPIClass.check_user_login_status()
+    constapis.USER_TOKEN = token
+
+    mBuildingData = generate_answer.get_building_data()
+    mEquipType = generate_answer.get_equipment_type()
+    mEndUse = generate_answer.get_end_use()
     app.run(debug=False)

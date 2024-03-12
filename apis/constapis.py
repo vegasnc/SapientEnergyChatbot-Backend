@@ -13,14 +13,27 @@ class APIClass:
         USER_TOKEN = token
 
     def getHeader(self):
+
+        print(f"User Token = {USER_TOKEN}")
+
         if( USER_TOKEN == "" ):
             return {
-                'Content-type': 'application/json'
+                'Content-type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Accept': '*/*',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*'
             }
         else:
             return {
                 'Content-type': 'application/json',
-                'Authorization' : 'Bearer ' + USER_TOKEN
+                'Authorization' : 'Bearer ' + USER_TOKEN,
+                'Cache-Control': 'no-cache',
+                'Accept': '*/*',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*'
             }
 
 

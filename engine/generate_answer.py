@@ -31,8 +31,8 @@ notDetectedResponseList = [
 ]
 
 notDetectedSystemMSGList = [
-    "Yes, this is a static test message 1.",
-    "Yes, this is a static test message 2.",
+    "I apologize for the inconvenience, but I'm unable to assist with navigating across the platform at the moment. It's possible that you may require personalized guidance for this. To ensure you get the help you need, I recommend reaching out to our support team. They have the expertise to assist you with platform navigation and any other questions you may have. They'll be glad to guide you further. Is there anything else I can assist you with today?",
+    "I apologize for the inconvenience, but I'm unable to assist with navigating across the platform at the moment. It's possible that you may require personalized guidance for this. To ensure you get the help you need, I recommend reaching out to our support team. They have the expertise to assist you with platform navigation and any other questions you may have. They'll be glad to guide you further. Is there anything else I can assist you with today?",
     "You are kind chatbot. You have to reply about the user greeting message. Very kindly and friendly.",
 ]
 
@@ -136,7 +136,7 @@ def get_answer(question, collection, stDate, enDate):
                 messages=[
                     {
                         "role": "system", 
-                        "content": system_msg
+                        "content": system_msg + " You must generate content shortly, under 100 words."
                     },
                     {
                         "role": "user", 
@@ -157,13 +157,13 @@ def get_answer(question, collection, stDate, enDate):
         # If the question is similar to response
         elif index >= question_len and index < (question_len + response_len):
             return {
-                "answer" : get_api_answer(relevant_arr[index - question_len]["api"], 0, question, stDate, enDate),
+                "answer" : get_api_answer(relevant_arr[index - question_len]["api"], 0, question, stDate, enDate, "", "", -1, ""),
                 "api" : []
             }
         # If the question is similar to short title
         elif index >= (question_len + response_len) and index < (question_len + 2 * response_len):
             return {
-                "answer" : get_api_answer(relevant_arr[index - question_len - response_len]["api"], 0, question, stDate, enDate),
+                "answer" : get_api_answer(relevant_arr[index - question_len - response_len]["api"], 0, question, stDate, enDate, "", "", -1, ""),
                 "api" : []
             }
     else:
@@ -205,7 +205,7 @@ def get_answer(question, collection, stDate, enDate):
 
         return result
 
-def get_api_answer(api, format, question, stDate, enDate, type_id, type_name):
+def get_api_answer(api, format, question, stDate, enDate, building_id, building_name, type_id, type_name):
 
     EquipmentPowerConsumption.setDate(stDate, enDate)
     
@@ -219,7 +219,7 @@ def get_api_answer(api, format, question, stDate, enDate, type_id, type_name):
         Format:
             Text
         """
-        res = EquipmentPowerConsumption.get_most_consumption_equipment(question)
+        res = EquipmentPowerConsumption.get_most_consumption_equipment(question, building_id, type_id)
 
         if res != 404 and len(res) != 0:
             answer = generate_answer_from_openai(res)
@@ -234,7 +234,7 @@ def get_api_answer(api, format, question, stDate, enDate, type_id, type_name):
         Format:
             Text
         """
-        res = EquipmentPowerConsumption.get_power_consumption_weekdays_weekend(question)
+        res = EquipmentPowerConsumption.get_power_consumption_weekdays_weekend(question, building_id, building_name, type_id)
         
         if res != 404 and len(res) > 0:
             answer = generate_answer_from_openai(res)
@@ -273,7 +273,7 @@ def get_api_answer(api, format, question, stDate, enDate, type_id, type_name):
         Format:
             Text+Pie Chart, Text, Text+Table
         """
-        res = EquipmentPowerConsumption.get_building_energy_consumption_by_end_uses_category(question)
+        res = EquipmentPowerConsumption.get_building_energy_consumption_by_end_uses_category(question, building_id, building_name, type_id)
 
         if res != 404 and res != False:
             answer = generate_answer_from_openai(res)
@@ -291,7 +291,7 @@ def get_api_answer(api, format, question, stDate, enDate, type_id, type_name):
         Format:
             Text+Table
         """
-        res = EquipmentPowerConsumption.get_energy_building_equipment(question)
+        res = EquipmentPowerConsumption.get_energy_building_equipment(question, building_id, building_name, type_id)
         
         if res != 404 and res!= False:
             answer = generate_answer_from_openai(res)
@@ -312,7 +312,7 @@ def get_api_answer(api, format, question, stDate, enDate, type_id, type_name):
         Format:
             Text+Table
         """
-        res = EquipmentPowerConsumption.get_explorer_equip_power_consumption(question)
+        res = EquipmentPowerConsumption.get_explorer_equip_power_consumption(question, building_id)
         
         if res != 404 and res!= False:
             answer = generate_answer_from_openai(res)
@@ -339,7 +339,7 @@ def generate_answer_from_openai(data):
         messages=[
             {
                 "role": "system",
-                "content": 'You are an energy chatbot that helps tally power and energy consumption. Please provide a human readable sentence of this data. Should be understandable to 18 year old, and include almost of the data. In the data, there are question and the data. You must reference the data for generating answer. There are lots of data not related with question in the data. So you have to reference only related data. In the data, there is key related with question. So you must reference this value of key from data. Not reference all data. No warnings, no other text shold be present in your answer. All values representing electric power and energy consumption are Wh(watt-hours). But all values representing electric power and energy consumption must be converted to KWh(kilowatt-hours). 1000Wh is 1KWh. Therefore, all values representing electric power and energy consumption must be divided by 1000. Convert the all energy consumption from Wh(watt-hours) to kWh(kilowatt-hours). You must divide all values, even if the values are less than 1000. Please do not use original Wh(watt-hours) values.'
+                "content": 'You are an energy chatbot that helps tally power and energy consumption. Please provide a human readable sentence of this data. Should be understandable to 18 year old, and include almost of the data. In the data, there are question and the data. You must reference the data for generating answer. There are lots of data not related with question in the data. So you have to reference only related data. In the data, there is key related with question. So you must reference this value of key from data. Not reference all data. No warnings, no other text shold be present in your answer. All values representing electric power and energy consumption are Wh(watt-hours). But all values representing electric power and energy consumption must be converted to KWh(kilowatt-hours). 1000Wh is 1KWh. Therefore, all values representing electric power and energy consumption must be divided by 1000. Convert the all energy consumption from Wh(watt-hours) to kWh(kilowatt-hours). You must divide all values, even if the values are less than 1000. Please do not use original Wh(watt-hours) values. You must generate content shortly, under 100 words. For example, if I ask "Where is the energy waste in my building?", you can anser "Sure, I can help with that! You can currently monitoring five buildings, which building are you interested in reducing energy waste? [Options] Require building list."'
             },
             {
                 "role": "user", 
@@ -422,9 +422,9 @@ def get_best_response(question, response_list):
     return best_response_index
 
 # For prepopulated data
-def get_equipment_list():
-    equip_data = IngestClass.get_equipment_list()
-    return equip_data
+def get_building_data():
+    building_data = IngestClass.get_building_data()
+    return building_data
 
 def get_equipment_type():
     equip_type = IngestClass.get_equipment_type()

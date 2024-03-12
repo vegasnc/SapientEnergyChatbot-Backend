@@ -1,4 +1,8 @@
 from flask import Flask
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from requests import Session
+
 import requests
 import apis.constapis as constapis
 import apis.userapi as userapi
@@ -8,6 +12,13 @@ import datetime
 class ExplorerClass:
     ConstAPIClass = None
     UserAPIClass = None
+    session = Session()
+    retries = Retry(
+        total=5,
+        backoff_factor=1,
+        status_forcelist=[502, 503, 504]
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retries))
 
     def __init__(self) -> None:
         self.ConstAPIClass = constapis.APIClass()
@@ -23,45 +34,50 @@ class ExplorerClass:
         sort_by: string (ace/dce)
     """
     def get_building_list(self, date_from, date_to, search_by_name="", consumption="energy", order_by="consumption", sort_by="dce"):
-        if self.UserAPIClass.check_user_login_status():
-            # if user is logged in
-            payload = {
-                "search_by_name": search_by_name,
-                "consumption": consumption,
-                "order_by": order_by,
-                "sort_by": sort_by
-            }
+        payload = {
+            "search_by_name": search_by_name,
+            "consumption": consumption,
+            "order_by": order_by,
+            "sort_by": sort_by
+        }
 
-            data = {
-                "date_from": date_from,
-                "date_to": date_to,
-                "tz_info": "US/Eastern",
-            }
+        data = {
+            "date_from": date_from,
+            "date_to": date_to,
+            "tz_info": "US/Eastern",
+        }
 
-            response = requests.post(constapis.BASE_URL + constapis.BUILDING_LIST, json=data,
-                                    params=payload, headers=self.ConstAPIClass.getHeader())
-            if response.status_code != 200:
-                return response.status_code
-            else:
-                return response.json()
+        print(f"get_building_list before post")
+
+        # response = requests.request("POST", constapis.BASE_URL + constapis.BUILDING_LIST,
+        #                             params=payload, data=data, headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.post(constapis.BASE_URL + constapis.BUILDING_LIST, 
+                                     timeout=30, params=payload, json=data, headers=self.ConstAPIClass.getHeader())
+        
+        print(f"get_building_list after post = {response.status_code}")
+        
+        if response.status_code != 200:
+            return response.status_code
         else:
-            return 404
+            return response.json()
 
     def get_building(self, config=False):
-        if self.UserAPIClass.check_user_login_status():
-            # if user is logged in
-            payload = {
-                "config": config
-            }
+        # if user is logged in
+        payload = {
+            "config": config
+        }
 
-            response = requests.get(constapis.BASE_URL + constapis.GET_BUILDING,
-                                    params=payload, headers=self.ConstAPIClass.getHeader())
-            if response.status_code != 200:
-                return response.status_code
-            else:
-                return response.json()
+        # response = requests.request("GET", constapis.BASE_URL + constapis.GET_BUILDING,
+        #                             params=payload, headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.get(constapis.BASE_URL + constapis.GET_BUILDING, 
+                                     timeout=30, params=payload, headers=self.ConstAPIClass.getHeader())
+        
+        print(f"-----------get_building {str(response)}")
+        
+        if response.status_code != 200:
+            return response.status_code
         else:
-            return 404
+            return response.json()
 
     """
     @param
@@ -108,8 +124,10 @@ class ExplorerClass:
         if len(space_type) != 0:
             data.update({ "space_type" : space_type })
 
-        response = requests.post(constapis.BASE_URL + constapis.GET_EQUIPMENT_LIST, json=data,
-                                 params=payload, headers=self.ConstAPIClass.getHeader())
+        # response = requests.request("POST", constapis.BASE_URL + constapis.GET_EQUIPMENT_LIST,
+        #                     params=payload, data=data, headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.post(constapis.BASE_URL + constapis.GET_EQUIPMENT_LIST, 
+                                     timeout=30, params=payload, json=data, headers=self.ConstAPIClass.getHeader())
         if response.status_code != 200:
             return response.status_code
         else:
@@ -151,8 +169,10 @@ class ExplorerClass:
         if len(space_type) != 0:
             data.update({ "space_type" : space_type })
 
-        response = requests.post(constapis.BASE_URL + constapis.FILTER_BY_DATERANGE, json=data,
-                                 params=payload, headers=self.ConstAPIClass.getHeader())
+        # response = requests.request("POST", constapis.BASE_URL + constapis.FILTER_BY_DATERANGE,
+        #                     params=payload, data=data, headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.post(constapis.BASE_URL + constapis.FILTER_BY_DATERANGE, 
+                                     timeout=30, params=payload, json=data, headers=self.ConstAPIClass.getHeader())
         if response.status_code != 200:
             return response.status_code
         else:
@@ -194,8 +214,10 @@ class ExplorerClass:
             "tz_info": "US/Eastern",
         }
 
-        response = requests.post(constapis.BASE_URL + constapis.EQUIPMENT_CHART, json=data,
-                                 params=payload, headers=self.ConstAPIClass.getHeader())
+        # response = requests.request("POST", constapis.BASE_URL + constapis.EQUIPMENT_CHART,
+        #                     params=payload, data=data, headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.post(constapis.BASE_URL + constapis.EQUIPMENT_CHART, 
+                                     timeout=30, params=payload, json=data, headers=self.ConstAPIClass.getHeader())
         if response.status_code != 200:
             return response.status_code
         else:
@@ -222,58 +244,56 @@ class ExplorerClass:
             "tz_info": "US/Eastern",
         }
 
-        response = requests.post(constapis.BASE_URL + constapis.EQUIPMENT_YTD_USAGE, json=data,
-                                 params=payload, headers=self.ConstAPIClass.getHeader())
+        # response = requests.request("POST", constapis.BASE_URL + constapis.EQUIPMENT_YTD_USAGE,
+        #                     params=payload, data=data, headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.post(constapis.BASE_URL + constapis.EQUIPMENT_YTD_USAGE, 
+                                     timeout=30, params=payload, json=data, headers=self.ConstAPIClass.getHeader())
         if response.status_code != 200:
             return response.status_code
         else:
             return response.json()
 
     def overall_building_energy_consumption(self, date_from, date_to):
-        if self.UserAPIClass.check_user_login_status():
-            data = {
-                "date_from": date_from,
-                "date_to": date_to,
-                "tz_info": "US/Eastern",
-            }
+        data = {
+            "date_from": date_from,
+            "date_to": date_to,
+            "tz_info": "US/Eastern",
+        }
 
-            response = requests.post(constapis.BASE_URL + constapis.GET_OVERALL_BUILDING, json=data,
-                                    headers=self.ConstAPIClass.getHeader())
-                
-            if response.status_code != 200:
-                return response.status_code
-            else:
-                return response.json()
+        # response = requests.request("POST", constapis.BASE_URL + constapis.GET_OVERALL_BUILDING, 
+        #                             data=data, headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.post(constapis.BASE_URL + constapis.GET_OVERALL_BUILDING, 
+                                     timeout=30, json=data, headers=self.ConstAPIClass.getHeader())
+        if response.status_code != 200:
+            return response.status_code
         else:
-            return 404
+            return response.json()
         
     def overall_building_power_consumption_by_end_uses_category(self, building_id, off_hours, date_from, date_to):
-        if self.UserAPIClass.check_user_login_status():
-            if( off_hours == None ):
-                payload = {
-                    "building_id": building_id
-                }
-            else:
-                payload = {
-                    "off_hours": off_hours,
-                    "building_id": building_id
-                }
-
-            data = {
-                "date_from": date_from,
-                "date_to": date_to,
-                "tz_info": "US/Eastern",
+        if( off_hours == None ):
+            payload = {
+                "building_id": building_id
+            }
+        else:
+            payload = {
+                "off_hours": off_hours,
+                "building_id": building_id
             }
 
+        data = {
+            "date_from": date_from,
+            "date_to": date_to,
+            "tz_info": "US/Eastern",
+        }
 
-            response = requests.post(constapis.BASE_URL + constapis.GET_END_USE_CATEGORY, json=data,
-                                      params=payload, headers=self.ConstAPIClass.getHeader())
-            
-            if response.status_code!= 200:
-                return response.status_code
-            else:
-                return response.json()
+        # response = requests.request("POST", constapis.BASE_URL + constapis.GET_END_USE_CATEGORY,
+        #                     params=payload, data=data, headers=self.ConstAPIClass.getHeader(), timeout=600)
+        response = self.session.post(constapis.BASE_URL + constapis.GET_END_USE_CATEGORY, 
+                                     timeout=30, json=data, params=payload, headers=self.ConstAPIClass.getHeader())
+        
+        if response.status_code!= 200:
+            return response.status_code
         else:
-            return 404
+            return response.json()
         
 
